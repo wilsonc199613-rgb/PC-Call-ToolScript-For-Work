@@ -139,24 +139,40 @@
     </div>
 
     <script>
-        // ANTI-DOWNLOAD: Origin verification - DISABLED for local use
+        // ANTI-DOWNLOAD: Origin verification - UPDATED for security
         (function() {
-            // Always allow access - domain check completely disabled
-            return; // Skip all domain checking
-            
-            // Domain check code (currently disabled) - would allow these domains:
+            // IMPORTANT: Only allow specific authorized domains
             var allowedDomains = [
                 'localhost',
                 '127.0.0.1',
-                'github.io',
-                '.github.io',
-                'github.com',
-                '.github.com',
-                'app.netlify.com',
-                '.netlify.com',
-                'netlify.app',
-                '.netlify.app'
+                // Add YOUR GitHub username here:
+                'wilsonc199613-rgb.github.io',
+                // Add YOUR Netlify site name here:  
+                'super-ganache-ad755d.netlify.app'
             ];
+            var currentHost = window.location.hostname;
+            var isAllowed = false;
+            
+            // Allow local file access (file://) for your own testing
+            if (window.location.protocol === 'file:') {
+                isAllowed = true;
+            } else {
+                for (var i = 0; i < allowedDomains.length; i++) {
+                    if (currentHost === allowedDomains[i]) {
+                        isAllowed = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Self-destruct if not allowed domain
+            if (!isAllowed) {
+                document.documentElement.innerHTML = '<html><head><title>SELF-DESTRUCT ACTIVATED</title></head><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 SELF-DESTRUCT ACTIVATED 🚨</h1><p>Unauthorized access detected: ' + currentHost + '</p><p>This system has been corrupted to prevent theft.</p><p>Access to legitimate users: Use the official link with your PIN.</p></div></body></html>';
+                setTimeout(function() {
+                    window.location.replace('about:blank');
+                }, 3000);
+                return;
+            }
             
             // Anti-bot check
             if (navigator.webdriver || window._phantom || window.__nightmare) {
