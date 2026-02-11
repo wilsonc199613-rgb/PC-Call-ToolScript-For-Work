@@ -2118,15 +2118,15 @@
     'use strict';
     
     // Configuration
-    const _0x1a2b = {
-        _0x3c4d: 'pc-tool-verified',
-        _0x5e6f: 'pc-tool-session-time',
-        _0x7g8h: 9,
-        _0x9i0j: 9 * 60 * 60 * 1000
+    const CONFIG = {
+        sessionKey: 'pc-tool-verified',
+        sessionTimeKey: 'pc-tool-session-time',
+        maxSessionHours: 9, // Session expires after 9 hours
+        pinExpiration: 9 * 60 * 60 * 1000 // 9 hours in milliseconds
     };
     
     // Generate secure device fingerprint
-    function _0x2b3c() {
+    function generateDeviceFingerprint() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.textBaseline = 'top';
@@ -2149,7 +2149,7 @@
     }
     
     // Generate secure 6-digit PIN (Google Authenticator style)
-    function _0x4d5e() {
+    function generateSecurePin() {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 8);
         const data = `PIN-${timestamp}-${random}`;
@@ -2165,16 +2165,16 @@
     }
     
     // Owner PIN generator (hidden feature - Ctrl+Shift+G)
-    function _0x6f7g() {
-        const _0x8h9i = `
+    function showTokenGenerator() {
+        const generatorHtml = `
             <div id="tokenGeneratorModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
                     <h2 style="color: #333; margin-top: 0;">🔐 PIN Generator</h2>
-                    <button onclick="_0x0a1b()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px; font-size: 16px;">Generate PIN</button>
+                    <button onclick="generateNewToken()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px; font-size: 16px;">Generate PIN</button>
                     <div id="tokenResult" style="display: none;">
                         <h3 style="color: #333;">Generated PIN:</h3>
                         <div id="tokenDisplay" style="background: #f8f9fa; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 32px; font-weight: bold; text-align: center; color: #333; margin: 10px 0; border: 2px solid #dee2e6; letter-spacing: 8px;"></div>
-                        <button onclick="_0x1c2d()" style="width: 100%; background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">📋 Copy PIN</button>
+                        <button onclick="copyGeneratedToken()" style="width: 100%; background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">📋 Copy PIN</button>
                         <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-top: 15px;">
                             <h4 style="color: #856404; margin-top: 0;">Send to User:</h4>
                             <ol style="color: #856404; margin: 10px 0; padding-left: 20px;">
@@ -2185,26 +2185,28 @@
                             <p style="color: #dc3545; font-weight: bold; margin-bottom: 0;">⚠️ PIN is one-time use &amp; expires in 9 hours.</p>
                         </div>
                     </div>
-                    <button onclick="_0x3e4f()" style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 14px;">Close</button>
+                    <button onclick="closeTokenGenerator()" style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 14px;">Close</button>
                 </div>
             </div>
         `;
         
-        document.body.insertAdjacentHTML('beforeend', _0x8h9i);
+        document.body.insertAdjacentHTML('beforeend', generatorHtml);
     }
     
-    function _0x0a1b() {
-        const pin = _0x4d5e();
+    function generateNewToken() {
+        const pin = generateSecurePin();
         
-        const _0x5b6c = {
+        // Store PIN data for validation
+        const pinData = {
             pin: pin,
             timestamp: Date.now(),
             used: false
         };
         
-        const _0x7d8e = JSON.parse(localStorage.getItem('active-pins') || '[]');
-        _0x7d8e.push(_0x5b6c);
-        localStorage.setItem('active-pins', JSON.stringify(_0x7d8e));
+        // Store in localStorage for validation (shared with token-generator.html on same domain)
+        const activePins = JSON.parse(localStorage.getItem('active-pins') || '[]');
+        activePins.push(pinData);
+        localStorage.setItem('active-pins', JSON.stringify(activePins));
         
         document.getElementById('tokenDisplay').textContent = pin;
         document.getElementById('tokenResult').style.display = 'block';
@@ -2212,49 +2214,50 @@
         console.log('🔑 New Universal PIN Generated:', { pin: pin, timestamp: new Date().toISOString() });
     }
     
-    function _0x1c2d() {
-        const _0x9f0g = document.getElementById('tokenDisplay').textContent;
-        navigator.clipboard.writeText(_0x9f0g).then(() => {
+    function copyGeneratedToken() {
+        const tokenText = document.getElementById('tokenDisplay').textContent;
+        navigator.clipboard.writeText(tokenText).then(() => {
             alert('✅ PIN copied to clipboard!');
         }).catch(() => {
-            const _0x1h2i = document.createElement('textarea');
-            _0x1h2i.value = _0x9f0g;
-            document.body.appendChild(_0x1h2i);
-            _0x1h2i.select();
+            const textArea = document.createElement('textarea');
+            textArea.value = tokenText;
+            document.body.appendChild(textArea);
+            textArea.select();
             document.execCommand('copy');
-            document.body.removeChild(_0x1h2i);
+            document.body.removeChild(textArea);
             alert('✅ PIN copied to clipboard!');
         });
     }
     
-    function _0x3e4f() {
-        const _0x3j4k = document.getElementById('tokenGeneratorModal');
-        if (_0x3j4k) _0x3j4k.remove();
+    function closeTokenGenerator() {
+        const modal = document.getElementById('tokenGeneratorModal');
+        if (modal) modal.remove();
     }
     
     // Hidden shortcut: Ctrl + Shift + G to open PIN generator
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.shiftKey && e.key === 'G') {
             e.preventDefault();
-            _0x6f7g();
+            showTokenGenerator();
         }
     });
     
     // Validate PIN against active-pins in localStorage
-    function _0x5l6m(pin) {
+    function validatePin(pin) {
         try {
             if (!pin || typeof pin !== 'string' || !/^\d{6}$/.test(pin)) return false;
             
-            const _0x7n8o = JSON.parse(localStorage.getItem('active-pins') || '[]');
-            const _0x9p0q = _0x7n8o.find(p => p.pin === pin && !p.used);
+            const activePins = JSON.parse(localStorage.getItem('active-pins') || '[]');
+            const pinData = activePins.find(p => p.pin === pin && !p.used);
             
-            if (!_0x9p0q) return false;
+            if (!pinData) return false;
             
-            const _0x1r2s = Date.now() - _0x9p0q.timestamp;
-            if (_0x1r2s > _0x1a2b._0x9i0j) return false;
+            const pinAge = Date.now() - pinData.timestamp;
+            if (pinAge > CONFIG.pinExpiration) return false;
             
-            _0x9p0q.used = true;
-            localStorage.setItem('active-pins', JSON.stringify(_0x7n8o));
+            // Mark PIN as used (one-time use)
+            pinData.used = true;
+            localStorage.setItem('active-pins', JSON.stringify(activePins));
             
             return { valid: true };
         } catch (e) {
@@ -2264,22 +2267,22 @@
     
     // ========== MAIN AUTH FLOW ==========
     
-    var _0x3t4u = sessionStorage.getItem(_0x1a2b._0x3c4d);
-    var _0x5v6w = parseInt(sessionStorage.getItem(_0x1a2b._0x5e6f) || '0');
-    var _0x7x8y = Date.now() - _0x5v6w;
-    var _0x9z0a = _0x1a2b._0x7g8h * 60 * 60 * 1000;
+    var existingSession = sessionStorage.getItem(CONFIG.sessionKey);
+    var sessionTime = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey) || '0');
+    var sessionAge = Date.now() - sessionTime;
+    var maxSessionMs = CONFIG.maxSessionHours * 60 * 60 * 1000;
     
-    if (_0x3t4u === 'true' && _0x5v6w > 0 && _0x7x8y < _0x9z0a) {
-        console.log('Active session found. Expires in ' + Math.round((_0x9z0a - _0x7x8y) / 60000) + ' min.');
+    if (existingSession === 'true' && sessionTime > 0 && sessionAge < maxSessionMs) {
+        console.log('Active session found. Expires in ' + Math.round((maxSessionMs - sessionAge) / 60000) + ' min.');
     } else {
-        sessionStorage.removeItem(_0x1a2b._0x3c4d);
-        sessionStorage.removeItem(_0x1a2b._0x5e6f);
+        sessionStorage.removeItem(CONFIG.sessionKey);
+        sessionStorage.removeItem(CONFIG.sessionTimeKey);
         
-        var _0x1a2bOverlay = document.createElement('div');
-        _0x1a2bOverlay.id = 'authOverlay';
-        _0x1a2bOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
+        var overlay = document.createElement('div');
+        overlay.id = 'authOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
         
-        _0x1a2bOverlay.innerHTML = '<div style="background:rgba(255,255,255,0.95);padding:40px 35px;border-radius:20px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);backdrop-filter:blur(10px);">'
+        overlay.innerHTML = '<div style="background:rgba(255,255,255,0.95);padding:40px 35px;border-radius:20px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);backdrop-filter:blur(10px);">'
             + '<div style="width:70px;height:70px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 25px rgba(102,126,234,0.4);">&#128274;</div>'
             + '<h2 style="color:#1a1a2e;margin:0 0 8px;font-size:22px;font-weight:700;">Enter Access PIN</h2>'
             + '<p style="color:#666;margin:0 0 25px;font-size:13px;">Please enter your 6-digit PIN to continue</p>'
@@ -2292,79 +2295,81 @@
             + '</div>'
             + '</div>';
         
-        document.body.appendChild(_0x1a2bOverlay);
+        document.body.appendChild(overlay);
         
         setTimeout(function() {
-            var _0x1a2bPinEl = document.getElementById('pinInput');
-            if (_0x1a2bPinEl) _0x1a2bPinEl.focus();
+            var pinEl = document.getElementById('pinInput');
+            if (pinEl) pinEl.focus();
         }, 100);
         
         // Submit PIN handler
-        function _0x7f8g() {
-            var _0x1a2bPinEl = document.getElementById('pinInput');
-            if (!_0x1a2bPinEl) return;
-            var _0x1a2bVal = _0x1a2bPinEl.value.trim();
+        function handleSubmitPin() {
+            var pinEl = document.getElementById('pinInput');
+            if (!pinEl) return;
+            var val = pinEl.value.trim();
             
-            if (!_0x1a2bVal) {
-                _0x1a2bPinEl.style.borderColor = '#e74c3c';
-                setTimeout(function() { _0x1a2bPinEl.style.borderColor = '#e0e0e0'; }, 1500);
+            if (!val) {
+                pinEl.style.borderColor = '#e74c3c';
+                setTimeout(function() { pinEl.style.borderColor = '#e0e0e0'; }, 1500);
                 return;
             }
             
             // Admin password check FIRST
-            if (_0x1a2bVal === String.fromCharCode(48,57,49,51,57,54)) {
-                console.log(String.fromCharCode(65,100,109,105,110,32,97,99,99,101,115,115,32,103,114,97,110,116,101,100));
-                _0x1a2bOverlay.remove();
+            if (val === '091396') {
+                console.log('Admin access granted');
+                overlay.remove();
                 // Set session variables to prevent heartbeat redirect
-                sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
-                sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
-                sessionStorage.setItem('device-fingerprint', _0x2b3c());
+                sessionStorage.setItem(CONFIG.sessionKey, 'true');
+                sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
+                sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
                 window.open('token.html', '_blank');
                 return; // Exit the function after handling admin access
             }
             
             // Regular PIN validation
-            var _0x1b2c = _0x5l6m(_0x1a2bVal);
-            if (!_0x1b2c || !_0x1b2c.valid) {
+            var result = validatePin(val);
+            if (!result || !result.valid) {
                 alert('Invalid or expired PIN. Contact administrator for a new PIN.');
                 return;
             }
             
             // Valid PIN - create session
-            _0x1a2bOverlay.remove();
-            sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
-            sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
-            sessionStorage.setItem('device-fingerprint', _0x2b3c());
+            overlay.remove();
+            sessionStorage.setItem(CONFIG.sessionKey, 'true');
+            sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
+            sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
         }
         
         // Admin link handler
-        function _0x3c4d() {
-            var _0x5e6f = prompt('Enter admin password:');
-            if (_0x5e6f === String.fromCharCode(48,57,49,51,57,54)) {
-                _0x1a2bOverlay.remove();
-                sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
-                sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
-                sessionStorage.setItem('device-fingerprint', _0x2b3c());
+        function handleAdminLink() {
+            var pw = prompt('Enter admin password:');
+            if (pw === '091396') {
+                overlay.remove();
+                // Set session variables to prevent heartbeat redirect
+                sessionStorage.setItem(CONFIG.sessionKey, 'true');
+                sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
+                sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
                 window.open('token.html', '_blank');
-            } else if (_0x5e6f !== null) {
+            } else if (pw !== null) {
+                // If password is incorrect, redirect to google.com
                 window.location.replace('https://google.com');
             }
         }
         
         // Attach events
-        var _0x1a2bSubmitBtn = document.getElementById('submitPinBtn');
-        var _0x1a2bAdminLnk = document.getElementById('adminLink');
-        var _0x1a2bPinField = document.getElementById('pinInput');
+        var submitBtn = document.getElementById('submitPinBtn');
+        var adminLnk = document.getElementById('adminLink');
+        var pinField = document.getElementById('pinInput');
         
-        if (_0x1a2bSubmitBtn) _0x1a2bSubmitBtn.addEventListener('click', _0x7f8g);
-        if (_0x1a2bAdminLnk) _0x1a2bAdminLnk.addEventListener('click', _0x3c4d);
-        if (_0x1a2bPinField) _0x1a2bPinField.addEventListener('keypress', function(e) { if (e.key === 'Enter') _0x7f8g(); });
+        if (submitBtn) submitBtn.addEventListener('click', handleSubmitPin);
+        if (adminLnk) adminLnk.addEventListener('click', handleAdminLink);
+        if (pinField) pinField.addEventListener('keypress', function(e) { if (e.key === 'Enter') handleSubmitPin(); });
     }
     
     // ========== ANTI-DOWNLOAD & ANTI-SCRAPING PROTECTION ==========
     
-    // 1. ENHANCED AUTO-DESTRUCTION & ORIGIN VERIFICATION
-    (function enhancedProtection() {
+    // 1. ORIGIN VERIFICATION - Block if not running on legitimate domain
+    (function originCheck() {
         var allowedDomains = [
             'localhost',
             '127.0.0.1',
@@ -2372,44 +2377,16 @@
             '.github.io',
             'github.com',
             '.github.com',
-            'vercel.com',
-            '.vercel.com',
-            'netlify.app',
-            '.netlify.app'
+            'netlify.com',
+            '.netlify.com'
         ];
         var currentHost = window.location.hostname;
-        var currentProtocol = window.location.protocol;
         var isAllowed = false;
         
-        // Enhanced verification checks
-        function selfDestruct(reason) {
-            // Multiple destruction methods
-            document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 SELF-DESTRUCT ACTIVATED</h1><p>' + reason + '</p><p>This application has been terminated.</p></div></body></html>';
-            
-            // Clear all storage and corrupt remaining data
-            try { 
-                localStorage.clear(); 
-                sessionStorage.clear();
-                // Fill with garbage data
-                for(var i = 0; i < 100; i++) {
-                    localStorage.setItem('junk_' + i, Math.random().toString(36));
-                    sessionStorage.setItem('junk_' + i, Math.random().toString(36));
-                }
-            } catch(e) {}
-            
-            // Disable all functionality
-            window.location.replace('about:blank');
-            setTimeout(function() { window.close(); }, 1000);
-            
-            // Throw errors to break any remaining scripts
-            throw new Error('APPLICATION TERMINATED: ' + reason);
-        }
-        
-        // Check 1: Protocol verification
-        if (currentProtocol === 'file:') {
-            isAllowed = true; // Allow local testing
+        // Allow local file access (file://) for your own testing
+        if (window.location.protocol === 'file:') {
+            isAllowed = true;
         } else {
-            // Check 2: Domain verification with enhanced matching
             for (var i = 0; i < allowedDomains.length; i++) {
                 if (currentHost === allowedDomains[i] || 
                     currentHost.endsWith(allowedDomains[i])) {
@@ -2419,125 +2396,61 @@
             }
         }
         
-        // Check 3: Referrer verification (prevent hotlinking)
-        var referrer = document.referrer;
-        if (referrer && !isAllowed) {
-            var referrerHost = new URL(referrer).hostname;
-            for (var i = 0; i < allowedDomains.length; i++) {
-                if (referrerHost === allowedDomains[i] || 
-                    referrerHost.endsWith(allowedDomains[i])) {
-                    isAllowed = true;
-                    break;
-                }
-            }
+        // 2. TOKEN.HTML DEPENDENCY CHECK - Ensure token.html exists and is accessible
+        function checkTokenDependency() {
+            return new Promise(function(resolve) {
+                var tokenUrl = window.location.origin + '/token.html';
+                var xhr = new XMLHttpRequest();
+                xhr.open('HEAD', tokenUrl, true);
+                xhr.onload = function() {
+                    resolve(xhr.status === 200);
+                };
+                xhr.onerror = function() {
+                    resolve(false);
+                };
+                xhr.timeout = 5000; // 5 second timeout
+                xhr.ontimeout = function() {
+                    resolve(false);
+                };
+                xhr.send();
+            });
         }
         
-        // Check 4: User agent verification (detect downloaders)
-        var userAgent = navigator.userAgent.toLowerCase();
-        var downloaderAgents = ['wget', 'curl', 'httrack', 'webcopier', 'teleport', 'websiteripper', 'sitecopy', 'grab', 'mirror', 'offline', 'download', 'archiv', 'scrape', 'bot', 'crawl', 'spider'];
-        for (var i = 0; i < downloaderAgents.length; i++) {
-            if (userAgent.indexOf(downloaderAgents[i]) !== -1) {
-                selfDestruct('Unauthorized downloader detected');
-                return;
-            }
-        }
-        
-        // Check 5: Browser capability verification
-        if (!window.requestAnimationFrame || !window.Promise || !window.fetch || !window.localStorage) {
-            selfDestruct('Invalid browser environment detected');
-            return;
-        }
-        
-        // Check 6: Timing verification (detect headless browsers)
-        var start = performance.now();
-        var end = performance.now();
-        if (end - start > 50) {
-            selfDestruct('Headless browser detected');
-            return;
-        }
-        
-        // Check 7: Window size verification (detect automation)
-        if (window.outerHeight === 0 || window.outerWidth === 0) {
-            selfDestruct('Invalid window dimensions detected');
-            return;
-        }
-
-        // Check 8: Cross-file dependency verification (token.html must exist)
-        (function _0x8h9i() {
-            try {
-                // Try to fetch token.html to verify it exists and is accessible
-                var _0x1j2k = new XMLHttpRequest();
-                _0x1j2k.open('HEAD', 'token.html', false); // Synchronous request for immediate check
-                _0x1j2k.send();
-
-                // If token.html doesn't exist or returns error, self-destruct
-                if (_0x1j2k.status !== 200) {
-                    selfDestruct('Missing required dependency: token.html');
-                    return;
-                }
-
-                // Additional check: Verify token.html contains expected content
-                var _0x3l4m = new XMLHttpRequest();
-                _0x3l4m.open('GET', 'token.html', false);
-                _0x3l4m.send();
-
-                if (_0x3l4m.status === 200) {
-                    var _0x5n6o = _0x3l4m.responseText;
-
-                    // Check for key indicators that this is the correct token.html
-                    var _0x7p8q = [
-                        'token',
-                        'generator',
-                        'admin',
-                        'password',
-                        'access'
-                    ];
-
-                    var _0x9r0s = false;
-                    for (var i = 0; i < _0x7p8q.length; i++) {
-                        if (_0x5n6o.toLowerCase().indexOf(_0x7p8q[i]) !== -1) {
-                            _0x9r0s = true;
-                            break;
-                        }
+        // Check if token.html dependency is satisfied
+        checkTokenDependency().then(function(tokenExists) {
+            if (!tokenExists && window.location.protocol !== 'file:') {
+                // token.html is missing - destroy the page completely
+                document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>INCOMPLETE INSTALLATION</h1><p>Required dependency missing: token.html</p><p>This application cannot function without all files.</p><p>Please download the complete package.</p></div></body></html>';
+                // Clear all storage to prevent any session persistence
+                try { 
+                    localStorage.clear(); 
+                    sessionStorage.clear(); 
+                    // Also clear any indexedDB or other storage
+                    if (window.indexedDB) {
+                        var databases = indexedDB.databases();
+                        databases.then(function(dbList) {
+                            dbList.forEach(function(db) {
+                                indexedDB.deleteDatabase(db.name);
+                            });
+                        });
                     }
-
-                    if (!_0x9r0s) {
-                        selfDestruct('Invalid token.html file detected');
-                        return;
-                    }
-                }
-
-            } catch (e) {
-                // Any error in checking token.html means it's not properly accessible
-                selfDestruct('Token dependency check failed: ' + e.message);
+                } catch(e) {}
+                // Prevent any further script execution
+                window.stop();
                 return;
             }
-        })();
-
-        // Final check: If not allowed, trigger self-destruction
-        if (!isAllowed) {
-            selfDestruct('Unauthorized domain: ' + currentHost);
-            return;
-        }
-
-        // Continuous monitoring
-        setInterval(function() {
-            // Monitor for domain changes
-            if (window.location.hostname !== currentHost) {
-                selfDestruct('Domain change detected');
+            
+            // Continue with domain check only if token.html exists
+            if (!isAllowed) {
+                // Someone downloaded and re-hosted the site - DESTROY everything
+                document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>ACCESS DENIED</h1><p>This is an unauthorized copy.</p><p>This website cannot be used outside its original domain.</p></div></body></html>';
+                // Clear all storage
+                try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
                 return;
             }
-
-            // Monitor for devtools
-            if (window.outerHeight - window.innerHeight > 200 || 
-                window.outerWidth - window.innerWidth > 200) {
-                selfDestruct('Developer tools detected');
-                return;
-            }
-        }, 2000);
-
+        });
     })();
-
+    
     // 2. IFRAME PROTECTION - Prevent embedding in other sites
     if (window.self !== window.top) {
         // Site is being loaded in an iframe (common scraper technique)
@@ -2545,14 +2458,19 @@
             document.documentElement.innerHTML = '';
         }
     }
-
+    
     // 3. ANTI-BOT / ANTI-SCRAPER DETECTION
     (function antiBot() {
         var isBot = false;
-
+        
         // Check for headless browser indicators
         if (navigator.webdriver === true) isBot = true;
-
+        if (window._phantom || window.__nightmare || window.callPhantom) isBot = true;
+        if (navigator.userAgent.match(/bot|crawl|spider|scrape|wget|curl|httrack|webcopier|teleport|websiteripper|sitecopy|grab|mirror|offline|download|archiv/i)) isBot = true;
+        if (!window.chrome && /Chrome/.test(navigator.userAgent)) isBot = true;
+        if (navigator.plugins && navigator.plugins.length === 0 && navigator.userAgent.indexOf('Chrome') > -1) isBot = true;
+        if (navigator.languages === undefined || navigator.languages.length === 0) isBot = true;
+        
         // Check for automation tools
         var automationProps = [
             '__webdriver_evaluate', '__selenium_evaluate', '__fxdriver_evaluate',
@@ -2562,7 +2480,7 @@
             'ChromeDriverw', 'driver-hierarchical', 'webdriver',
             'domAutomation', 'domAutomationController'
         ];
-
+        
         for (var i = 0; i < automationProps.length; i++) {
             if (window[automationProps[i]] !== undefined || 
                 document[automationProps[i]] !== undefined) {
@@ -2570,13 +2488,13 @@
                 break;
             }
         }
-
+        
         if (isBot) {
             document.documentElement.innerHTML = '';
             window.location.replace('about:blank');
         }
     })();
-
+    
     // 4. DYNAMIC CONTENT INJECTION - Content only loads via JS (scrapers get empty HTML)
     (function dynamicProtection() {
         // Add a nonce that changes every load - scrapers can't cache it
@@ -2853,7 +2771,7 @@
         </div>
 
         <div class="section-box" style="border: 2px solid var(--accent);">
-            <div class="bundle-category-header" id="quickBundleHeader" onclick="_0x1a2b()" style="cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; background: var(--accent); color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; transition: background 0.2s;">
+            <div class="bundle-category-header" id="quickBundleHeader" onclick="toggleQuickBundleAccordion()" style="cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; background: var(--accent); color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; transition: background 0.2s;">
                 <span>🎁 Quick Bundle Offer Overview</span>
                 <span class="accordion-arrow" style="transition: transform 0.3s;">▼</span>
             </div>
@@ -2862,12 +2780,12 @@
                 <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 15px;">Click a category to view bundles.</p>
                 
                 <div class="bundle-editor-row">
-                    <button id="bundleEditToggleBtn" class="bundle-editor-btn primary" type="button" onclick="_0x3c4d()">Edit Bundles: OFF</button>
-                    <button id="bundleAddCategoryBtn" class="bundle-editor-btn" type="button" onclick="_0x5e6f()" style="display:none;">+ Category</button>
+                    <button id="bundleEditToggleBtn" class="bundle-editor-btn primary" type="button" onclick="toggleBundleEditMode()">Edit Bundles: OFF</button>
+                    <button id="bundleAddCategoryBtn" class="bundle-editor-btn" type="button" onclick="addBundleCategory()" style="display:none;">+ Category</button>
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <input type="text" id="bundleSearch" placeholder="🔍 Search keywords: Laba (Laundry), Plato (Dishes), Ngipin (Teeth), Deodorant, Insecticide, Home Care, Soap, Baby, Sabon, Lysol, Zonrox, Safeguard, Johnson's, Pampers, Colgate, Rexona, Chanel, Maybelline... OR Shortcut Codes: DL, PLD, TBC, MSC, NTBC, LLD, CFC, MIK, BC, BL, BS, BW, BP, BMS, PUP, FT, GT, APD, ABS, IW, FW, HBL, SC, EDT, HML, WSS, VF, FK, ICM, MBM, CWC, AA" oninput="_0x7g8h()" style="width: 100%; border: 1px solid var(--accent); padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 16px;">
+                    <input type="text" id="bundleSearch" placeholder="🔍 Search keywords: Laba (Laundry), Plato (Dishes), Ngipin (Teeth), Deodorant, Insecticide, Home Care, Soap, Baby, Sabon, Lysol, Zonrox, Safeguard, Johnson's, Pampers, Colgate, Rexona, Chanel, Maybelline... OR Shortcut Codes: DL, PLD, TBC, MSC, NTBC, LLD, CFC, MIK, BC, BL, BS, BW, BP, BMS, PUP, FT, GT, APD, ABS, IW, FW, HBL, SC, EDT, HML, WSS, VF, FK, ICM, MBM, CWC, AA" oninput="searchBundles()" style="width: 100%; border: 1px solid var(--accent); padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 16px;">
                 </div>
                 
                 <div class="bundle-categories-container" id="bundleCategories"></div>
@@ -3041,16 +2959,16 @@
     
     <!-- Search Bar -->
     <div style="margin-bottom: 10px;">
-        <input type="text" id="quickPromoSearch" placeholder="🔍 Search quick promos (e.g., product name, variant...)" oninput="_0x9a8b()" style="width: 100%; border: 1px solid var(--accent); padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 14px;">
+        <input type="text" id="quickPromoSearch" placeholder="🔍 Search quick promos (e.g., product name, variant...)" oninput="searchQuickPromos()" style="width: 100%; border: 1px solid var(--accent); padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 14px;">
     </div>
     
     <!-- Export/Import Buttons -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-        <button onclick="_0x1c2d()" style="background: linear-gradient(135deg, #7877c6, #6360b0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📤 Export to Excel</button>
-        <button onclick="_0x3e4f()" style="background: linear-gradient(135deg, #ff77c6, #e056a0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📥 Import from Excel</button>
+        <button onclick="exportQuickPromosToExcel()" style="background: linear-gradient(135deg, #7877c6, #6360b0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📤 Export to Excel</button>
+        <button onclick="importQuickPromosFromExcel()" style="background: linear-gradient(135deg, #ff77c6, #e056a0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📥 Import from Excel</button>
     </div>
     
-    <button class="btn-add" onclick="_0x5f6g()" style="background: linear-gradient(135deg, #7877c6, #ff77c6); width: 100%;">➕ Add New Quick Promo</button>
+    <button class="btn-add" onclick="addQuickPromo()" style="background: linear-gradient(135deg, #7877c6, #ff77c6); width: 100%;">➕ Add New Quick Promo</button>
     
     <div id="promosDisplay" style="margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 10px;">
         <div style="text-align: center; padding: 25px; color: rgba(255,255,255,0.4);">
@@ -5830,30 +5748,30 @@ function formatVariantsForReceipt(scentString) {
     return s;
 }
 
-function _0x1a2b(bundleName) {
+function styleBundleName(bundleName) {
     // Style the "BUNDLE:" prefix with a distinct orange/amber colored badge
-    let _0x3c4d = String(bundleName || '');
-    _0x3c4d = _0x3c4d.replace(/^BUNDLE:/i, '<span style="background: linear-gradient(135deg, #ffb74d, #ff9800); color: #333; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #f57c00; margin-right: 4px;">🎁 BUNDLE</span>');
-    return _0x3c4d;
+    let styled = String(bundleName || '');
+    styled = styled.replace(/^BUNDLE:/i, '<span style="background: linear-gradient(135deg, #ffb74d, #ff9800); color: #333; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #f57c00; margin-right: 4px;">🎁 BUNDLE</span>');
+    return styled;
 }
 
-function _0x5e6f(promoName, promoItem, skipSets = false) {
+function getCleanPromoName(promoName, promoItem, skipSets = false) {
     // Remove quantity prefix like "(3-pcs)" from promo names
-    let _0x7g8h = String(promoName || '').replace(/^\(\d+-pcs\)\s*/, '');
+    let cleanName = String(promoName || '').replace(/^\(\d+-pcs\)\s*/, '');
     
     // Style the "MIXED PROMO:" or "PROMO:" prefix with distinct colors
-    _0x7g8h = _0x7g8h.replace(/^MIXED PROMO:/i, '<span style="background: linear-gradient(135deg, #e040fb, #ab47bc); color: white; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #8e24aa; margin-right: 4px;">🎯 MIXED PROMO</span>');
-    _0x7g8h = _0x7g8h.replace(/^PROMO:/i, '<span style="background: linear-gradient(135deg, #66bb6a, #43a047); color: white; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #2e7d32; margin-right: 4px;">🏷️ PROMO</span>');
+    cleanName = cleanName.replace(/^MIXED PROMO:/i, '<span style="background: linear-gradient(135deg, #e040fb, #ab47bc); color: white; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #8e24aa; margin-right: 4px;">🎯 MIXED PROMO</span>');
+    cleanName = cleanName.replace(/^PROMO:/i, '<span style="background: linear-gradient(135deg, #66bb6a, #43a047); color: white; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; letter-spacing: 0.5px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #2e7d32; margin-right: 4px;">🏷️ PROMO</span>');
     
     // Highlight buy and take words in the promo name
-    _0x7g8h = highlightPromoWords(_0x7g8h);
+    cleanName = highlightPromoWords(cleanName);
     
-    if (skipSets) return _0x7g8h;
+    if (skipSets) return cleanName;
     
-    const _0x9i0j = (promoItem.promo?.buyQty || 0) + (promoItem.promo?.freeQty || 0);
-    const _0x1k2l = Math.floor(promoItem.q / _0x9i0j);
-    const _0x3m4n = _0x1k2l === 1 ? `<span class="bundle-qty-1-set">(1-set)</span>` : `<span class="bundle-qty-multi-sets">(${_0x1k2l}-sets)</span>`;
-    return `${_0x3m4n} ${_0x7g8h}`;
+    const basePromoQty = (promoItem.promo?.buyQty || 0) + (promoItem.promo?.freeQty || 0);
+    const promoSets = Math.floor(promoItem.q / basePromoQty);
+    const promoSetsText = promoSets === 1 ? `<span class="bundle-qty-1-set">(1-set)</span>` : `<span class="bundle-qty-multi-sets">(${promoSets}-sets)</span>`;
+    return `${promoSetsText} ${cleanName}`;
 }
 
 function render(autoScroll = true) {
@@ -5950,7 +5868,7 @@ function render(autoScroll = true) {
             list.innerHTML += `
             <div class="cart-card">
                 <button class="remove-item" onclick="cart.splice(${originalIndex},1); render()">✕</button>
-                <div class="product-name-header">${isBundle ? `${bundleQtyTxt} ${_0x1a2b(it.n)}${scentTxt}` : (isPromo ? `${_0x5e6f(it.n, it)}${scentTxt}` : `${qtyTxt} ${it.n}${scentTxt}`)}</div>
+                <div class="product-name-header">${isBundle ? `${bundleQtyTxt} ${styleBundleName(it.n)}${scentTxt}` : (isPromo ? `${getCleanPromoName(it.n, it)}${scentTxt}` : `${qtyTxt} ${it.n}${scentTxt}`)}</div>
                 <div class="variant-discount-row">
                     <div class="variant-area">${bulletedVariantHtml}</div>
                     ${isDiscOn ? `<div class="discount-badge">${(activeDisc*100)}% OFF</div>` : ''}
@@ -6747,11 +6665,15 @@ function render(autoScroll = true) {
         const input = document.getElementById('prodSearch');
         if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
             dropdown.classList.remove('active');
+            dropdown.innerHTML = '';
+            prodSearchSelectedIndex = -1;
+        }
+    });
 
     // ------------------- SEARCH BUNDLES -------------------
-    function _0x7g8h() {
-        const _0x9i0j = document.getElementById('bundleSearch').value.toLowerCase();
-        if (!_0x9i0j || _0x9i0j.length < 2) {
+    function searchBundles() {
+        const term = document.getElementById('bundleSearch').value.toLowerCase();
+        if (!term || term.length < 2) {
             // If search is cleared, show all categories and items
             document.querySelectorAll('.bundle-category-wrapper').forEach(wrapper => {
                 wrapper.style.display = '';
@@ -6763,10 +6685,10 @@ function render(autoScroll = true) {
         }
 
         // First, ensure the Quick Bundle Overview is expanded
-        const _0x1k2l = document.getElementById('quickBundleContent');
-        const _0x3m4n = document.getElementById('quickBundleHeader');
-        if (_0x1k2l && _0x1k2l.style.display === 'none') {
-            _0x1a2b();
+        const quickBundleContent = document.getElementById('quickBundleContent');
+        const quickBundleHeader = document.getElementById('quickBundleHeader');
+        if (quickBundleContent && quickBundleContent.style.display === 'none') {
+            toggleQuickBundleAccordion();
         }
 
         let foundAny = false;
@@ -6780,7 +6702,7 @@ function render(autoScroll = true) {
                 const title = titleEl ? titleEl.textContent.toLowerCase() : '';
                 const imgAlt = card.querySelector('img') ? card.querySelector('img').alt.toLowerCase() : '';
                 
-                if (title.includes(_0x9i0j) || imgAlt.includes(_0x9i0j)) {
+                if (title.includes(term) || imgAlt.includes(term)) {
                     card.style.display = '';
                     categoryHasMatch = true;
                     foundAny = true;
@@ -6824,24 +6746,24 @@ function render(autoScroll = true) {
     }
 
     // ------------------- QUICK BUNDLE ACCORDION -------------------
-    function _0x1a2b() {
-        const _0x5n6o = document.getElementById('quickBundleContent');
-        const _0x7p8q = document.getElementById('quickBundleHeader');
-        const _0x9r0s = _0x7p8q.querySelector('.accordion-arrow');
+    function toggleQuickBundleAccordion() {
+        const content = document.getElementById('quickBundleContent');
+        const header = document.getElementById('quickBundleHeader');
+        const arrow = header.querySelector('.accordion-arrow');
         
-        const _0x1t2u = _0x5n6o.style.display !== 'none';
+        const isExpanded = content.style.display !== 'none';
         
-        if (_0x1t2u) {
-            _0x5n6o.style.display = 'none';
-            _0x9r0s.style.transform = 'rotate(-90deg)';
+        if (isExpanded) {
+            content.style.display = 'none';
+            arrow.style.transform = 'rotate(-90deg)';
             // Remove sticky behavior when closing
-            _0x7p8q.style.position = '';
-            _0x7p8q.style.top = '';
-            _0x7p8q.style.width = '';
-            _0x7p8q.style.zIndex = '';
-            _0x7p8q.style.backgroundColor = '';
-            _0x7p8q.style.borderRadius = '';
-            _0x7p8q.style.boxShadow = '';
+            header.style.position = '';
+            header.style.top = '';
+            header.style.width = '';
+            header.style.zIndex = '';
+            header.style.backgroundColor = '';
+            header.style.borderRadius = '';
+            header.style.boxShadow = '';
             
             // Close all nested bundle categories when the main accordion closes
             document.querySelectorAll('.bundle-category-content').forEach(catContent => {
@@ -6856,7 +6778,7 @@ function render(autoScroll = true) {
             // Auto-focus to Buy X Take Y section when closing
             setTimeout(() => {
                 const buyTakeSection = Array.from(document.querySelectorAll('h3')).find(h3 => 
-                    h3.textContent && h3.textContent.includes(' 1. Buy X Take Y (Quick Promos)')
+                    h3.textContent && h3.textContent.includes('🎯 1. Buy X Take Y (Quick Promos)')
                 );
                 if (buyTakeSection) {
                     buyTakeSection.scrollIntoView({ 
@@ -6867,24 +6789,24 @@ function render(autoScroll = true) {
                 }
             }, 100); // Small delay to ensure smooth transition
         } else {
-            _0x5n6o.style.display = 'block';
-            _0x9r0s.style.transform = 'rotate(0deg)';
+            content.style.display = 'block';
+            arrow.style.transform = 'rotate(0deg)';
             // Apply sticky behavior when opening - stay within container
-            const sectionBox = _0x7p8q.closest('.section-box');
+            const sectionBox = header.closest('.section-box');
             if (sectionBox) {
                 sectionBox.style.position = 'relative';
-                _0x7p8q.style.position = 'sticky';
-                _0x7p8q.style.top = '0';
-                _0x7p8q.style.width = '100%';
-                _0x7p8q.style.zIndex = '100';
-                _0x7p8q.style.backgroundColor = 'var(--accent)';
-                _0x7p8q.style.borderRadius = '8px';
-                _0x7p8q.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                header.style.position = 'sticky';
+                header.style.top = '0';
+                header.style.width = '100%';
+                header.style.zIndex = '100';
+                header.style.backgroundColor = 'var(--accent)';
+                header.style.borderRadius = '8px';
+                header.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
             }
             
             // Auto-scroll to make the bundle section fully visible
             setTimeout(() => {
-                _0x7p8q.scrollIntoView({ 
+                header.scrollIntoView({ 
                     behavior: 'smooth', 
                     block: 'start',
                     inline: 'nearest'
@@ -6893,50 +6815,983 @@ function render(autoScroll = true) {
         }
     }
 
-    // ... (rest of the code remains the same)
-
-    function _0x3c4d() {
-        bundleOverviewEditMode = !bundleOverviewEditMode;
-        const _0x5x6y = document.getElementById('bundleEditToggleBtn');
-        const _0x7z8a = document.getElementById('bundleAddCategoryBtn');
-        const _0x9b0c = document.getElementById('bundleResetBtn');
-        
-        // Quick export buttons
-        const _0x1d2e = document.getElementById('exportProductTemplatesBtn');
-        const _0x3f4g = document.getElementById('exportBundleTemplatesBtn');
-        const _0x5h6i = document.getElementById('exportFullBackupBtn');
-        const _0x7j8k = document.getElementById('importWithOptionsBtn');
-        
-        if (_0x5x6y) _0x5x6y.innerText = `Edit Bundles: ${bundleOverviewEditMode ? 'ON' : 'OFF'}`;
-        if (_0x7z8a) _0x7z8a.style.display = bundleOverviewEditMode ? '' : 'none';
-        if (_0x9b0c) _0x9b0c.style.display = bundleOverviewEditMode ? '' : 'none';
-        
-        // Show/hide quick export buttons
-        if (_0x1d2e) _0x1d2e.style.display = bundleOverviewEditMode ? '' : 'none';
-        if (_0x3f4g) _0x3f4g.style.display = bundleOverviewEditMode ? '' : 'none';
-        if (_0x5h6i) _0x5h6i.style.display = bundleOverviewEditMode ? '' : 'none';
-        if (_0x7j8k) _0x7j8k.style.display = bundleOverviewEditMode ? '' : 'none';
-        
-        renderBundleOverview();
+    // ------------------- STICKY HEADER SCROLL HANDLING -------------------
+    let scrollTimeout;
+    function handleScroll() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            const quickBundleContent = document.getElementById('quickBundleContent');
+            const quickBundleHeader = document.getElementById('quickBundleHeader');
+            
+            // Only handle scroll behavior if bundle accordion is open
+            if (quickBundleContent && quickBundleContent.style.display !== 'none') {
+                const selectProductSection = Array.from(document.querySelectorAll('h3')).find(h3 => 
+                    h3.textContent && h3.textContent.includes('🛍️ 2. Select Products')
+                );
+                
+                if (selectProductSection) {
+                    const selectProductRect = selectProductSection.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+                    
+                    // Check if Select Product section is in view (even partially)
+                    if (selectProductRect.top < viewportHeight && selectProductRect.bottom > 0) {
+                        // Close the accordion if it's open and user scrolls to Select Product section
+                        quickBundleContent.style.display = 'none';
+                        const arrow = quickBundleHeader.querySelector('.accordion-arrow');
+                        arrow.style.transform = 'rotate(-90deg)';
+                        
+                        // Remove sticky behavior
+                        quickBundleHeader.style.position = '';
+                        quickBundleHeader.style.top = '';
+                        quickBundleHeader.style.width = '';
+                        quickBundleHeader.style.zIndex = '';
+                        quickBundleHeader.style.backgroundColor = '';
+                        quickBundleHeader.style.borderRadius = '';
+                        quickBundleHeader.style.boxShadow = '';
+                        
+                        // Close all nested bundle categories
+                        document.querySelectorAll('.bundle-category-content').forEach(catContent => {
+                            catContent.classList.remove('expanded');
+                            const catHeader = catContent.previousElementSibling;
+                            if (catHeader) {
+                                catHeader.classList.add('collapsed');
+                                catHeader.classList.remove('active');
+                            }
+                        });
+                        
+                        // Focus on the Select Product section
+                        selectProductSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            }
+        }, 100); // Debounce scroll events
     }
 
-    function _0x5e6f() {
-        if (!bundleOverviewEditMode) return;
-        const _0x9l0m = (prompt('New Category Name:') || '').trim();
-        if (!_0x9l0m) return;
-        const _0x1n2o = defaultBundleDiscPctForTitle(_0x9l0m);
-        const discRaw = prompt('Discount percent for this category (e.g. 25 or 20):', String(_0x1n2o));
-        if (discRaw === null) return;
-        let discPct = parseFloat(String(discRaw).trim());
-        if (!Number.isFinite(discPct)) discPct = _0x1n2o;
-        discPct = Math.max(0, Math.min(100, discPct));
-        const _0x1k2l = ensureUniqueCategoryId(_0x9l0m);
-        bundleOverviewData.categories.push({ id: _0x1k2l, title: _0x9l0m, discPct, items: [] });
-        saveBundleOverview();
-        renderBundleOverview();
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+
+    // ------------------- SEARCH FLYERS -------------------
+    function searchFlyers() {
+        const term = document.getElementById('flyerSearch').value.toLowerCase();
+        const promoCards = document.querySelectorAll('.promo-card');
+        
+        if (!term || term.length < 2) {
+            // If search is cleared, show all flyers
+            promoCards.forEach(card => {
+                card.style.display = '';
+            });
+            return;
+        }
+
+        let foundAny = false;
+        
+        // Search through all flyer cards by filename
+        promoCards.forEach(card => {
+            const filenameEl = card.querySelector('.promo-filename');
+            const filename = filenameEl ? filenameEl.textContent.toLowerCase() : '';
+            
+            if (filename.includes(term)) {
+                card.style.display = '';
+                foundAny = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show "no results" message if no flyers match
+        const emptyMsg = document.getElementById('emptyMsg');
+        if (!foundAny && promoCards.length > 0) {
+            if (emptyMsg) {
+                emptyMsg.style.display = 'block';
+                emptyMsg.textContent = `No flyers found matching "${term}"`;
+            }
+        } else {
+            if (emptyMsg) {
+                emptyMsg.style.display = promoCards.length === 0 ? 'block' : 'none';
+                emptyMsg.textContent = 'Upload flyers here.';
+            }
+        }
     }
 
-    // ... (rest of the code remains the same)
+    // ------------------- CATEGORY DROPDOWN TOGGLE -------------------
+    function toggleCategory(header, categoryId) {
+        const content = document.getElementById(categoryId);
+        const isExpanded = content.classList.contains('expanded');
+        
+        // Close all other categories
+        document.querySelectorAll('.bundle-category-content').forEach(cat => {
+            if (cat.id !== categoryId) {
+                cat.classList.remove('expanded');
+                cat.previousElementSibling.classList.add('collapsed');
+                cat.previousElementSibling.classList.remove('active');
+            }
+        });
+        
+        // Toggle current category
+        if (isExpanded) {
+            content.classList.remove('expanded');
+            header.classList.add('collapsed');
+            header.classList.remove('active');
+        } else {
+            content.classList.add('expanded');
+            header.classList.remove('collapsed');
+            header.classList.add('active');
+            
+            // Smooth scroll to the expanded category
+            setTimeout(() => {
+                header.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }, 100); // Small delay to ensure content is expanded first
+        }
+    }
+
+    // INITIAL SYNC
+    try {
+        const savedTheme = (localStorage.getItem('pc_theme') || '').toLowerCase();
+        if (savedTheme === 'pink') setTheme('pink');
+    } catch (e) {}
+    updateThemeToggleBtn();
+
+    // Add keyboard event listener for Enter key to trigger Add to Cart / Add Promo to Cart
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger if a modal is open
+        const modalOpen = document.getElementById('variantSelectionModal');
+        if (modalOpen) return;
+
+        if (e.key === 'Enter') {
+            // Check if we're in the Select Products section
+            const selectProductsSection = Array.from(document.querySelectorAll('h3')).find(h3 => 
+                h3.textContent && h3.textContent.includes('🛍️ 2. Select Products')
+            );
+            
+            if (selectProductsSection) {
+                const sectionBox = selectProductsSection.closest('.section-box');
+                if (sectionBox && sectionBox.contains(document.activeElement)) {
+                    // If focus is within the Select Products section, trigger Add to Cart
+                    e.preventDefault();
+                    toCart();
+                    return;
+                }
+            }
+            
+            // Check if we're in the Promo Builder section
+            const promoBuilderSection = Array.from(document.querySelectorAll('h3')).find(h3 => 
+                h3.textContent && h3.textContent.includes('🎁 3. Promo Builder')
+            );
+            
+            if (promoBuilderSection) {
+                const sectionBox = promoBuilderSection.closest('.section-box');
+                if (sectionBox && sectionBox.contains(document.activeElement)) {
+                    // If focus is within the Promo Builder section, trigger Add Promo to Cart
+                    e.preventDefault();
+                    addPromo();
+                    return;
+                }
+            }
+        }
+    });
+
+    const zoomOverlay = document.getElementById('zoomOverlay');
+    const zoomedImg = document.getElementById('zoomedImg');
+    if (!flyerZoomBound && zoomOverlay && zoomedImg) {
+        flyerZoomBound = true;
+
+        // Mouse wheel zoom
+        zoomOverlay.addEventListener('wheel', (e) => {
+            if (zoomOverlay.style.display !== 'flex') return;
+            e.preventDefault();
+            const delta = Math.sign(e.deltaY);
+            const next = flyerZoomScale + (delta > 0 ? -0.15 : 0.15);
+            flyerZoomScale = Math.min(6, Math.max(1, Number(next.toFixed(2))));
+            applyFlyerZoom();
+        }, { passive: false });
+
+        // Mouse drag functionality
+        let isDragging = false;
+        zoomedImg.addEventListener('mousedown', (e) => {
+            if (zoomOverlay.style.display !== 'flex') return;
+            isDragging = true;
+            const dragStartX = e.clientX;
+            const dragStartY = e.clientY;
+            const imageStartX = parseInt(zoomedImg.style.left || '0', 10);
+            const imageStartY = parseInt(zoomedImg.style.top || '0', 10);
+            zoomedImg.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || zoomOverlay.style.display !== 'flex') return;
+            e.preventDefault();
+            
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            
+            zoomedImg.style.left = (imageStartX + deltaX) + 'px';
+            zoomedImg.style.top = (imageStartY + deltaY) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                zoomedImg.style.cursor = 'grab';
+            }
+        });
+
+        // Close zoom on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && zoomOverlay.style.display === 'flex') {
+                closeZoom();
+            }
+        });
+
+        // Close zoom on overlay click (but not on image)
+        zoomOverlay.addEventListener('click', (e) => {
+            if (e.target === zoomOverlay) {
+                closeZoom();
+            }
+        });
+    }
+
+    const promoGallery = document.getElementById('promoGallery');
+    if (promoGallery) {
+        promoGallery.addEventListener('click', (e) => {
+            const el = e.target;
+            if (!el) return;
+            if (el.tagName === 'IMG' && el.id !== 'zoomedImg') {
+                zoomImg(el.src);
+            }
+        });
+    }
+    syncSub();
+</script>
+<script>
+const BUNDLE_OVERVIEW_STORAGE_KEY = 'pc_bundle_overview_v1';
+let bundleOverviewEditMode = false;
+let bundleOverviewData = null;
+
+function safeParseJson(raw, fallback) {
+    try { return JSON.parse(raw); } catch (e) { return fallback; }
+}
+
+function normalizeId(id) {
+    return String(id || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'item';
+}
+
+function parseJsArgs(argStr) {
+    const parts = [];
+    let cur = '';
+    let inStr = false;
+    let quote = '';
+
+    for (let i = 0; i < argStr.length; i++) {
+        const ch = argStr[i];
+        if (inStr) {
+            cur += ch;
+            if (ch === '\\' && i + 1 < argStr.length) {
+                cur += argStr[i + 1];
+                i++;
+                continue;
+            }
+            if (ch === quote) {
+                inStr = false;
+                quote = '';
+            }
+            continue;
+        }
+
+        if (ch === "'" || ch === '"') {
+            inStr = true;
+            quote = ch;
+            cur += ch;
+            continue;
+        }
+
+        if (ch === ',') {
+            parts.push(cur.trim());
+            cur = '';
+            continue;
+        }
+
+        cur += ch;
+    }
+
+    if (cur.trim()) parts.push(cur.trim());
+    return parts;
+}
+
+function unquoteJsString(tok) {
+    const t = String(tok || '').trim();
+    if ((t.startsWith("'") && t.endsWith("'")) || (t.startsWith('"') && t.endsWith('"'))) {
+        const body = t.slice(1, -1);
+        return body
+            .replace(/\\\"/g, '"')
+            .replace(/\\\'/g, "'");
+    }
+    return t;
+}
+
+function defaultBundleDiscPctForTitle(title) {
+    return String(title || '').trim() === 'Food & Beverage' ? 20 : 25;
+}
+
+function bundleCategoryDiscFraction(cat) {
+    let pct = Number(cat && cat.discPct);
+    if (!Number.isFinite(pct)) pct = defaultBundleDiscPctForTitle(cat && cat.title);
+    if (pct <= 1) pct = pct * 100;
+    pct = Math.max(0, Math.min(100, pct));
+    return pct / 100;
+}
+
+function buildDefaultBundleOverview() {
+    const tpl = document.getElementById('bundleCategoriesTemplate');
+    if (!tpl || !tpl.content) return { categories: [] };
+
+    const tmp = document.createElement('div');
+    tmp.appendChild(tpl.content.cloneNode(true));
+
+    const categories = [];
+    tmp.querySelectorAll('.bundle-category-wrapper').forEach(wrapper => {
+        const headerEl = wrapper.querySelector('.bundle-category-header');
+        const contentEl = wrapper.querySelector('.bundle-category-content');
+        const catId = (contentEl && contentEl.id) ? contentEl.id : normalizeId(headerEl ? headerEl.textContent : 'category');
+        const catTitle = headerEl ? String(headerEl.textContent || '').trim() : catId;
+
+        const items = [];
+        wrapper.querySelectorAll('.bundle-card').forEach((card, idx) => {
+            const onclick = String(card.getAttribute('onclick') || '').trim();
+            const m = onclick.match(/add(?:Promo)?Bundle\((.*)\)\s*$/);
+            if (!m) return;
+            const parts = parseJsArgs(m[1]);
+            if (parts.length < 5) return;
+
+            const name = unquoteJsString(parts[0]);
+            const price = parseFloat(parts[1]) || 0;
+            const pcs = parseInt(parts[2], 10) || 1;
+            const scent = unquoteJsString(parts[3]);
+            const category = unquoteJsString(parts[4]) || catTitle;
+
+            const offerTitleEl = card.querySelector('.bundle-offer-title');
+            const offerTitle = offerTitleEl ? String(offerTitleEl.textContent || '').trim() : '';
+
+            items.push({
+                id: `${normalizeId(name) || 'bundle'}-${idx + 1}`,
+                name,
+                price,
+                pcs,
+                scent,
+                category,
+                offerTitle
+            });
+        });
+
+        categories.push({
+            id: catId,
+            title: catTitle,
+            discPct: defaultBundleDiscPctForTitle(catTitle),
+            items
+        });
+    });
+
+    return { categories };
+}
+
+function loadBundleOverview() {
+    const defaults = buildDefaultBundleOverview();
+    try {
+        const raw = localStorage.getItem(BUNDLE_OVERVIEW_STORAGE_KEY);
+        console.log('Loading bundle overview from localStorage:', raw ? 'Data found' : 'No data found');
+        if (!raw) {
+            console.log('No localStorage data, using defaults and auto-saving');
+            bundleOverviewData = defaults;
+            // Defer auto-save to prevent blocking
+            setTimeout(() => saveBundleOverview(), 100);
+            return defaults;
+        }
+        const parsed = safeParseJson(raw, null);
+        if (!parsed || !Array.isArray(parsed.categories)) {
+            console.log('Invalid data format, using defaults and auto-saving');
+            bundleOverviewData = defaults;
+            // Defer auto-save to prevent blocking
+            setTimeout(() => saveBundleOverview(), 100);
+            return defaults;
+        }
+        parsed.categories = parsed.categories.map(c => {
+            const title = c && c.title ? c.title : '';
+            const discPct = (c && c.discPct !== undefined)
+                ? c.discPct
+                : defaultBundleDiscPctForTitle(title);
+            
+            // Clean up items - remove image properties
+            if (c.items && Array.isArray(c.items)) {
+                c.items = c.items.map(item => {
+                    const { imgThumb, imgZoom, ...cleanItem } = item;
+                    return cleanItem;
+                });
+            }
+            
+            return { ...c, discPct };
+        });
+        console.log('Bundle overview loaded successfully:', parsed.categories.length, 'categories');
+        return parsed;
+    } catch (e) {
+        console.error('Error loading bundle overview:', e);
+        console.log('Using defaults due to error');
+        bundleOverviewData = defaults;
+        // Defer auto-save to prevent blocking
+        setTimeout(() => saveBundleOverview(), 100);
+        return defaults;
+    }
+}
+
+function saveBundleOverview() {
+    if (!bundleOverviewData) {
+        bundleOverviewData = loadBundleOverview();
+    }
+    if (bundleOverviewData && bundleOverviewData.categories) {
+        try { 
+            localStorage.setItem(BUNDLE_OVERVIEW_STORAGE_KEY, JSON.stringify(bundleOverviewData)); 
+            console.log('Bundle overview saved successfully');
+        } catch (e) { 
+            console.error('Failed to save bundle overview:', e);
+        }
+    }
+}
+
+function ensureUniqueCategoryId(baseId) {
+    const base = normalizeId(baseId);
+    const existing = new Set((bundleOverviewData?.categories || []).map(c => c.id));
+    if (!existing.has(base)) return base;
+    let i = 2;
+    while (existing.has(`${base}-${i}`)) i++;
+    return `${base}-${i}`;
+}
+
+function ensureUniqueItemId(cat, baseId) {
+    const base = normalizeId(baseId);
+    const existing = new Set((cat?.items || []).map(it => it.id));
+    if (!existing.has(base)) return base;
+    let i = 2;
+    while (existing.has(`${base}-${i}`)) i++;
+    return `${base}-${i}`;
+}
+
+function findBundleCategory(catId) {
+    return (bundleOverviewData?.categories || []).find(c => c.id === catId) || null;
+}
+
+function findBundleItem(catId, itemId) {
+    const cat = findBundleCategory(catId);
+    if (!cat) return null;
+    const item = (cat.items || []).find(it => it.id === itemId) || null;
+    return { cat, item };
+}
+
+function bundleHeaderClick(ev, headerEl, categoryId) {
+    const target = ev && ev.target;
+    if (target && target.closest && target.closest('[data-bundle-action]')) return;
+    if (bundleOverviewEditMode && target && target.classList && target.classList.contains('bundle-category-title')) return;
+    toggleCategory(headerEl, categoryId);
+}
+
+function bundleCardClick(ev, categoryId, itemId) {
+    if (bundleOverviewEditMode) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        editBundleItem(categoryId, itemId);
+        return;
+    }
+
+    const found = findBundleItem(categoryId, itemId);
+    if (!found || !found.cat || !found.item) return;
+    const it = found.item;
+    const disc = bundleCategoryDiscFraction(found.cat);
+    
+    // Show Bundle Variant Selection modal before adding to cart
+    showBundleVariantModal(it, found.cat, disc);
+}
+
+// Bundle Variant Selection Modal Functions
+let currentBundleItem = null;
+let currentBundleCategory = null;
+let currentBundleDiscount = 0;
+
+function showBundleVariantModal(bundleItem, category, discount) {
+    currentBundleItem = bundleItem;
+    currentBundleCategory = category;
+    currentBundleDiscount = discount;
+    
+    const modal = document.getElementById('bundleVariantModal');
+    const optionsContainer = document.getElementById('bundleVariantOptions');
+    
+    // Clear existing options
+    optionsContainer.innerHTML = '';
+    
+    // Get available variants based on bundle configuration
+    const variants = getBundleVariants(bundleItem, category);
+    const bundleQuantity = Number(bundleItem.pcs) || 1;
+    
+    // Update description to show quantity requirement
+    const description = modal.querySelector('.bundle-variant-description');
+    description.textContent = `Select ${bundleQuantity} variant${bundleQuantity > 1 ? 's' : ''} for this bundle or choose "Assorted" to use all variants:`;
+    
+    // Create variant options with quantity inputs
+    variants.forEach((variant, index) => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'bundle-variant-option';
+
+        const label = document.createElement('label');
+        label.htmlFor = `variant-${index}`;
+        
+        // Apply color-coded variant styling for non-Assorted variants
+        if (variant.value === 'Assorted') {
+            label.textContent = variant.label;
+        } else {
+            // Use the createColoredVariant function to generate colored HTML
+            label.innerHTML = createColoredVariant(variant.label);
+        }
+        
+        label.style.cssText = 'flex: 1; cursor: pointer; color: var(--text-main);';
+
+        if (variant.value === 'Assorted') {
+            // For Assorted, make the label itself clickable to select it
+            label.classList.add('assorted-option-label');
+            label.addEventListener('click', function() {
+                handleAssortedSelection(bundleQuantity);
+            });
+            optionDiv.appendChild(label);
+        } else {
+            const quantityInput = document.createElement('input');
+            quantityInput.type = 'number';
+            quantityInput.min = '0';
+            quantityInput.max = bundleQuantity;
+            quantityInput.value = '0';
+            quantityInput.className = 'bundle-variant-quantity';
+            quantityInput.id = `variant-${index}`;
+            quantityInput.setAttribute('data-variant', variant.value);
+            quantityInput.style.cssText = `
+                width: 80px;
+                padding: 8px;
+                background: #111;
+                color: white;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                text-align: center;
+                margin-left: 10px;
+            `;
+
+            // Add event listener to update total when quantity changes
+            quantityInput.addEventListener('input', function() {
+                let currentTotal = 0;
+                const quantityInputs = document.querySelectorAll('.bundle-variant-quantity');
+                quantityInputs.forEach(input => {
+                    currentTotal += parseInt(input.value) || 0;
+                });
+
+                if (currentTotal > bundleQuantity) {
+                    const excess = currentTotal - bundleQuantity;
+                    const currentValue = parseInt(this.value) || 0;
+
+                    if (currentValue > excess) {
+                        this.value = currentValue - excess;
+                    } else {
+                        this.value = '0';
+                    }
+
+                    updateVariantQuantityDisplay(bundleQuantity);
+                    alert(`You can only select a total of ${bundleQuantity} items for this bundle.`);
+                } else {
+                    updateVariantQuantityDisplay(bundleQuantity);
+                }
+            });
+
+            optionDiv.appendChild(label);
+            optionDiv.appendChild(quantityInput);
+        }
+        optionsContainer.appendChild(optionDiv);
+    });
+    
+    // Add quantity display
+    const quantityDisplay = document.createElement('div');
+    quantityDisplay.id = 'variantQuantityDisplay';
+    quantityDisplay.style.cssText = `
+        background: var(--primary);
+        color: white;
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+    `;
+    quantityDisplay.textContent = `Selected: 0/${bundleQuantity} variants`;
+    optionsContainer.appendChild(quantityDisplay);
+    
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+function handleAssortedSelection(bundleQuantity) {
+    // Reset all quantity inputs to 0
+    const quantityInputs = document.querySelectorAll('.bundle-variant-quantity');
+    quantityInputs.forEach(input => {
+        input.value = '0';
+    });
+    
+    // Update display to show Assorted selected
+    const display = document.getElementById('variantQuantityDisplay');
+    if (display) {
+        display.textContent = `Selected: Assorted (All Variants)`;
+        display.style.background = 'var(--accent)';
+    }
+    
+    // Add visual indication that Assorted is selected
+    const assortedLabel = document.querySelector('.assorted-option-label');
+    if (assortedLabel) {
+        assortedLabel.style.background = 'rgba(242, 153, 74, 0.2)';
+        assortedLabel.style.border = '1px solid var(--accent)';
+        assortedLabel.style.borderRadius = '4px';
+        assortedLabel.style.padding = '4px 8px';
+    }
+}
+
+function getBundleVariants(bundleItem, category) {
+    const variants = [];
+    
+    let configuredVariants = [];
+    
+    if (bundleItem.scent) {
+        const lowerCaseScent = bundleItem.scent.toLowerCase();
+        
+        if (lowerCaseScent === 'assorted') {
+            // If scent is "Assorted", include all category variants
+            switch (category.title) {
+                case 'Home Care':
+                    configuredVariants = ['Classic', 'Lemon Fresh', 'Lavender'];
+                    break;
+                case 'Personal Care':
+                    configuredVariants = ['Standard', 'Fresh', 'Mint'];
+                    break;
+                case 'Food & Beverage':
+                    configuredVariants = ['Ganoderma', 'Classic', 'Premium'];
+                    break;
+                case 'Cosmetics':
+                    configuredVariants = ['Red', 'Pink', 'Nude'];
+                    break;
+                default:
+                    configuredVariants = ['Standard'];
+            }
+        } else {
+            // Handle comma-separated variants
+            configuredVariants = bundleItem.scent.split(',').map(s => s.trim()).filter(s => s !== '');
+        }
+    }
+    
+    // If no specific variants configured, use category defaults (single variant)
+    if (configuredVariants.length === 0) {
+        switch (category.title) {
+            case 'Home Care':
+                configuredVariants = ['Classic'];
+                break;
+            case 'Personal Care':
+                configuredVariants = ['Standard'];
+                break;
+            case 'Food & Beverage':
+                configuredVariants = ['Ganoderma'];
+                break;
+            case 'Cosmetics':
+                configuredVariants = ['Red'];
+                break;
+            default:
+                configuredVariants = ['Standard'];
+        }
+    }
+    
+    // Convert to variant objects and ensure uniqueness
+    const uniqueVariants = new Set();
+    configuredVariants.forEach(variant => {
+        if (!uniqueVariants.has(variant)) {
+            variants.push({ value: variant, label: variant });
+            uniqueVariants.add(variant);
+        }
+    });
+    
+    // Always include Assorted option if not already present
+    if (!uniqueVariants.has('Assorted')) {
+        variants.push({ value: 'Assorted', label: 'Assorted (All Variants)' });
+    }
+    return variants;
+}
+
+function toggleVariantSelection(optionElement, variant, maxQuantity) {
+    const checkbox = optionElement.querySelector('input[type="checkbox"]');
+    const isChecked = checkbox.checked;
+    
+    // Count current selections
+    const allCheckboxes = document.querySelectorAll('input[name="bundleVariant"]:checked');
+    const currentCount = allCheckboxes.length;
+    
+    // Handle Assorted selection (mutually exclusive)
+    if (variant.value === 'Assorted') {
+        if (!isChecked) {
+            // Uncheck all other variants and check Assorted
+            document.querySelectorAll('input[name="bundleVariant"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.bundle-variant-option').classList.remove('selected');
+            });
+            checkbox.checked = true;
+            optionElement.classList.add('selected');
+        } else {
+            checkbox.checked = false;
+            optionElement.classList.remove('selected');
+        }
+    } else {
+        // Handle regular variant selection
+        if (isChecked) {
+            // Unchecking
+            checkbox.checked = false;
+            optionElement.classList.remove('selected');
+        } else {
+            // Checking - ensure we don't exceed quantity limit
+            if (currentCount >= maxQuantity) {
+                alert(`You can only select ${maxQuantity} variant${maxQuantity > 1 ? 's' : ''} for this bundle.`);
+                return;
+            }
+            
+            // Uncheck Assorted if it's selected
+            const assortedCheckbox = document.querySelector('input[value="Assorted"]');
+            if (assortedCheckbox && assortedCheckbox.checked) {
+                assortedCheckbox.checked = false;
+                assortedCheckbox.closest('.bundle-variant-option').classList.remove('selected');
+            }
+            
+            checkbox.checked = true;
+            optionElement.classList.add('selected');
+        }
+    }
+}
+
+function updateVariantQuantityDisplay(maxQuantity) {
+    const display = document.getElementById('variantQuantityDisplay');
+    if (!display) return;
+    
+    const quantityInputs = document.querySelectorAll('.bundle-variant-quantity');
+    let totalSelected = 0;
+    let variantDetails = [];
+    
+    quantityInputs.forEach(input => {
+        const quantity = parseInt(input.value) || 0;
+        const variant = input.getAttribute('data-variant');
+        
+        if (quantity > 0) {
+            totalSelected += quantity;
+            if (variant !== 'Assorted') {
+                variantDetails.push(`${quantity} ${variant}`);
+            }
+        }
+    });
+    
+    // Check if Assorted is selected (by checking visual styling)
+    const assortedLabel = document.querySelector('.assorted-option-label');
+    const assortedSelected = assortedLabel && assortedLabel.style.background === 'rgba(242, 153, 74, 0.2)';
+    
+    if (assortedSelected) {
+        display.textContent = `Selected: Assorted (All Variants)`;
+        display.style.background = 'var(--accent)';
+    } else {
+        display.textContent = `Selected: ${totalSelected}/${maxQuantity} items${variantDetails.length > 0 ? ' (' + variantDetails.join(', ') + ')' : ''}`;
+        display.style.background = totalSelected === maxQuantity ? '#34a853' : 'var(--primary)';
+    }
+}
+
+function confirmBundleVariantSelection() {
+    const quantityInputs = document.querySelectorAll('.bundle-variant-quantity');
+    const bundleQuantity = Number(currentBundleItem.pcs) || 1;
+
+    let totalSelected = 0;
+    let variantDetails = [];
+    
+    // Check if Assorted is selected (by checking visual styling)
+    const assortedLabel = document.querySelector('.assorted-option-label');
+    const assortedSelected = assortedLabel && assortedLabel.style.background === 'rgba(242, 153, 74, 0.2)';
+
+    if (assortedSelected) {
+        // Assorted is selected, proceed with confirmation
+        if (currentBundleItem) {
+            addPromoBundle(
+                currentBundleItem.name,
+                Number(currentBundleItem.price) || 0,
+                Number(currentBundleItem.pcs) || 1,
+                'Assorted',
+                currentBundleItem.category || currentBundleCategory.title || '',
+                currentBundleDiscount
+            );
+        }
+        closeBundleVariantModal();
+        return;
+    }
+
+    // If not Assorted, check regular variant selections
+    quantityInputs.forEach(input => {
+        const quantity = parseInt(input.value) || 0;
+        const variant = input.getAttribute('data-variant');
+
+        if (quantity > 0) {
+            totalSelected += quantity;
+            variantDetails.push(`${quantity} ${variant}`);
+        }
+    });
+
+    if (totalSelected === 0) {
+        alert('Please select at least one variant option.');
+        return;
+    }
+
+    // Check if correct number of items is selected
+    if (totalSelected !== bundleQuantity) {
+        alert(`Please select exactly ${bundleQuantity} item${bundleQuantity > 1 ? 's' : ''} for this bundle. Current total: ${totalSelected}`);
+        return;
+    }
+
+    // Create variant string from selected variants
+    const selectedVariant = variantDetails.join(', ');
+
+    // Add the bundle to cart with the selected variant(s)
+    if (currentBundleItem) {
+        addPromoBundle(
+            currentBundleItem.name,
+            Number(currentBundleItem.price) || 0,
+            Number(currentBundleItem.pcs) || 1,
+            selectedVariant,
+            currentBundleItem.category || currentBundleCategory.title || '',
+            currentBundleDiscount
+        );
+    }
+
+    // Close modal
+    closeBundleVariantModal();
+}
+
+function closeBundleVariantModal() {
+    const modal = document.getElementById('bundleVariantModal');
+    modal.style.display = 'none';
+
+    
+    // Reset current bundle data
+    currentBundleItem = null;
+    currentBundleCategory = null;
+    currentBundleDiscount = 0;
+}
+
+function renderBundleOverview() {
+    const container = document.getElementById('bundleCategories');
+    if (!container) return;
+    if (!bundleOverviewData) bundleOverviewData = loadBundleOverview();
+
+    const html = (bundleOverviewData.categories || []).map(cat => {
+        const hasItems = Array.isArray(cat.items) && cat.items.length > 0;
+        const itemsHtml = hasItems
+            ? cat.items.map(it => {
+                const offerTitle = it.offerTitle || it.name || '';
+                const priceNum = Number(it.price) || 0;
+                const deleteBtn = bundleOverviewEditMode
+                    ? `<button class="bundle-item-delete" type="button" data-bundle-action="del-item" onclick="event.stopPropagation(); deleteBundleItem('${cat.id}', '${it.id}')">✕</button>`
+                    : '';
+                return `
+                            <div class="bundle-card ${bundleOverviewEditMode ? 'edit-mode' : ''}" onclick="bundleCardClick(event, '${cat.id}', '${it.id}')">
+                                ${deleteBtn}
+                                <div class="bundle-info">
+                                    <span class="bundle-offer-title">${offerTitle}</span>
+                                    <span class="bundle-offer-price">₱${priceNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>`;
+            }).join('')
+            : `
+                            <div style="padding: 20px; text-align: center; color: var(--text-sub);">
+                                No bundles available in this category yet.
+                            </div>`;
+
+        const actionsHtml = bundleOverviewEditMode
+            ? `
+                        <span class="bundle-inline-actions">
+                            <button class="bundle-editor-btn" type="button" data-bundle-action="add" onclick="addBundleItem('${cat.id}')">+ Bundle</button>
+                            <button class="bundle-editor-btn danger" type="button" data-bundle-action="del" onclick="deleteBundleCategory('${cat.id}')">Delete</button>
+                        </span>`
+            : '';
+
+        return `
+                <div class="bundle-category-wrapper">
+                    <div class="bundle-category-header collapsed" onclick="bundleHeaderClick(event, this, '${cat.id}')">
+                        <span class="bundle-category-title" data-cat-id="${cat.id}" ${bundleOverviewEditMode ? 'contenteditable="true"' : ''}>${cat.title || ''}</span>
+                        ${actionsHtml}
+                    </div>
+                    <div class="bundle-category-content" id="${cat.id}">
+                        <div class="bundle-grid">
+${itemsHtml}
+                        </div>
+                    </div>
+                </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+
+    if (bundleOverviewEditMode) {
+        container.querySelectorAll('.bundle-category-title[contenteditable="true"]').forEach(el => {
+            el.addEventListener('blur', () => {
+                const catId = el.getAttribute('data-cat-id');
+                const cat = findBundleCategory(catId);
+                if (!cat) return;
+                const nextTitle = String(el.textContent || '').trim();
+                if (!nextTitle) {
+                    el.textContent = cat.title || '';
+                    return;
+                }
+                cat.title = nextTitle;
+                saveBundleOverview();
+            });
+        });
+    }
+}
+
+function toggleBundleEditMode() {
+    bundleOverviewEditMode = !bundleOverviewEditMode;
+    const btn = document.getElementById('bundleEditToggleBtn');
+    const addBtn = document.getElementById('bundleAddCategoryBtn');
+    const resetBtn = document.getElementById('bundleResetBtn');
+    
+    // Quick export buttons
+    const productTemplatesBtn = document.getElementById('exportProductTemplatesBtn');
+    const bundleTemplatesBtn = document.getElementById('exportBundleTemplatesBtn');
+    const fullBackupBtn = document.getElementById('exportFullBackupBtn');
+    const smartImportBtn = document.getElementById('importWithOptionsBtn');
+    
+    if (btn) btn.innerText = `Edit Bundles: ${bundleOverviewEditMode ? 'ON' : 'OFF'}`;
+    if (addBtn) addBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    if (resetBtn) resetBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    
+    // Show/hide quick export buttons
+    if (productTemplatesBtn) productTemplatesBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    if (bundleTemplatesBtn) bundleTemplatesBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    if (fullBackupBtn) fullBackupBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    if (smartImportBtn) smartImportBtn.style.display = bundleOverviewEditMode ? '' : 'none';
+    
+    renderBundleOverview();
+}
+
+function addBundleCategory() {
+    if (!bundleOverviewEditMode) return;
+    const title = (prompt('New Category Name:') || '').trim();
+    if (!title) return;
+    const discDefault = defaultBundleDiscPctForTitle(title);
+    const discRaw = prompt('Discount percent for this category (e.g. 25 or 20):', String(discDefault));
+    if (discRaw === null) return;
+    let discPct = parseFloat(String(discRaw).trim());
+    if (!Number.isFinite(discPct)) discPct = discDefault;
+    discPct = Math.max(0, Math.min(100, discPct));
     const id = ensureUniqueCategoryId(title);
     bundleOverviewData.categories.push({ id, title, discPct, items: [] });
     saveBundleOverview();
@@ -9734,58 +10589,58 @@ function showVariantSelectionModal(callback) {
 }
 
 // Add Quick Promo function - Standalone System
-function _0x5f6g() {
+function addQuickPromo() {
     // Step 1: Get Product Name
-    const _0x7h8i = prompt("Enter PRODUCT NAME:").trim();
-    if (!_0x7h8i) {
+    const productName = prompt("Enter PRODUCT NAME:").trim();
+    if (!productName) {
         alert("Product name is required.");
         return;
     }
 
     // Step 2: Get Product Price
-    const _0x9j0k = parseFloat(prompt("Enter PRODUCT PRICE (₱):")) || 0;
-    if (_0x9j0k <= 0) {
+    const productPrice = parseFloat(prompt("Enter PRODUCT PRICE (₱):")) || 0;
+    if (productPrice <= 0) {
         alert("Please enter a valid price greater than 0.");
         return;
     }
 
     // Step 3: Get Percentage Discount
-    const _0x1l2m = parseFloat(prompt("Enter PERCENTAGE DISCOUNT (e.g., 25 for 25%):")) || 0;
-    if (_0x1l2m < 0 || _0x1l2m > 100) {
+    const percentage = parseFloat(prompt("Enter PERCENTAGE DISCOUNT (e.g., 25 for 25%):")) || 0;
+    if (percentage < 0 || percentage > 100) {
         alert("Please enter a valid percentage between 0 and 100.");
         return;
     }
 
     // Step 4: Get Variants (comma separated)
-    const _0x3n4o = prompt("Enter VARIANTS (comma separated, e.g., Red, Blue, Green) or leave blank for Standard:").trim();
-    let _0x5p6q = [];
-    if (_0x3n4o) {
-        _0x5p6q = _0x3n4o.split(',').map(v => v.trim()).filter(v => v);
+    const variantsInput = prompt("Enter VARIANTS (comma separated, e.g., Red, Blue, Green) or leave blank for Standard:").trim();
+    let variants = [];
+    if (variantsInput) {
+        variants = variantsInput.split(',').map(v => v.trim()).filter(v => v);
     } else {
-        _0x5p6q = ['Standard'];
+        variants = ['Standard'];
     }
 
     // Step 5: Get Buy Quantity
-    const _0x7r8s = parseInt(prompt("How many items to BUY? (e.g., 1, 2, 3):")) || 0;
-    if (_0x7r8s <= 0) {
+    const buyQty = parseInt(prompt("How many items to BUY? (e.g., 1, 2, 3):")) || 0;
+    if (buyQty <= 0) {
         alert("Please enter a valid number greater than 0.");
         return;
     }
 
     // Step 6: Get Take Quantity
-    const _0x9t0u = parseInt(prompt("How many items to TAKE? (e.g., 0, 1, 2):")) || 0;
-    if (_0x9t0u < 0) {
+    const takeQty = parseInt(prompt("How many items to TAKE? (e.g., 0, 1, 2):")) || 0;
+    if (takeQty < 0) {
         alert("Please enter a valid number greater than or equal to 0.");
         return;
     }
 
     // Step 7: Check if this is a free promo
-    let _0x1v2w = 0;
-    if (_0x9t0u > 0) {
-        const _0x3x4y = confirm("Is this a FREE promo? (Click OK for FREE, Cancel for priced take items)");
-        if (!_0x3x4y) {
-            _0x1v2w = parseFloat(prompt("Enter the PRICE for each TAKE item (₱):")) || 0;
-            if (_0x1v2w < 0) {
+    let takePrice = 0;
+    if (takeQty > 0) {
+        const isFreePromo = confirm("Is this a FREE promo? (Click OK for FREE, Cancel for priced take items)");
+        if (!isFreePromo) {
+            takePrice = parseFloat(prompt("Enter the PRICE for each TAKE item (₱):")) || 0;
+            if (takePrice < 0) {
                 alert("Take price cannot be negative.");
                 return;
             }
@@ -9793,7 +10648,7 @@ function _0x5f6g() {
     }
 
     // Step 8: Save the promo to the promos list (not cart yet)
-    saveQuickPromoToList(_0x7h8i, _0x9j0k, _0x1l2m, _0x5p6q, _0x7r8s, _0x9t0u, _0x1v2w);
+    saveQuickPromoToList(productName, productPrice, percentage, variants, buyQty, takeQty, takePrice);
 }
 
 // Standalone Variant Modal Function
@@ -10211,14 +11066,18 @@ function updatePromosDisplay() {
             </div>
         `;
     });
+    
+    html += '</div>';
+    promosDisplay.innerHTML = html;
+}
 
 // Search quick promos function
-function _0x9a8b() {
+function searchQuickPromos() {
     updatePromosDisplay();
 }
 
 // Export Quick Promos to Excel
-function _0x1c2d() {
+function exportQuickPromosToExcel() {
     try {
         if (savedQuickPromos.length === 0) {
             alert('No quick promos to export!');
@@ -10226,7 +11085,7 @@ function _0x1c2d() {
         }
 
         // Create data for Excel export
-        const _0x7h8i = savedQuickPromos.map((promo, index) => ({
+        const exportData = savedQuickPromos.map((promo, index) => ({
             'No.': index + 1,
             'Product Name': promo.productName || '',
             'Product Price': promo.productPrice || 0,
@@ -10241,16 +11100,16 @@ function _0x1c2d() {
         }));
 
         // Convert to CSV format (Excel-compatible)
-        const _0x9j0k = convertToCSV(_0x7h8i);
-        const _0x1l2m = new Blob([_0x9j0k], { type: 'text/csv;charset=utf-8;' });
-        const _0x3n4o = URL.createObjectURL(_0x1l2m);
-        const _0x5p6q = document.createElement('a');
-        _0x5p6q.href = _0x3n4o;
-        _0x5p6q.download = `Buy X Take Y (Backups)_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(_0x5p6q);
-        _0x5p6q.click();
-        document.body.removeChild(_0x5p6q);
-        URL.revokeObjectURL(_0x3n4o);
+        const csvContent = convertToCSV(exportData);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Buy X Take Y (Backups)_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         
         alert(`✅ Quick Promos exported successfully!\n\n${savedQuickPromos.length} promos exported to Excel file.\n\nYou can now edit this file in Excel and import it back.`);
     } catch (e) {
@@ -10260,45 +11119,45 @@ function _0x1c2d() {
 }
 
 // Import Quick Promos from Excel
-function _0x3e4f() {
+function importQuickPromosFromExcel() {
     // Create file input
-    const _0x7r8s = document.createElement('input');
-    _0x7r8s.type = 'file';
-    _0x7r8s.accept = '.csv,.xlsx,.xls';
-    _0x7r8s.style.display = 'none';
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.xlsx,.xls';
+    fileInput.style.display = 'none';
     
-    _0x7r8s.onchange = function(e) {
-        const _0x9t0u = e.target.files[0];
-        if (!_0x9t0u) return;
+    fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
         
-        const _0x1v2w = new FileReader();
-        _0x1v2w.onload = function(event) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
             try {
-                const _0x3x4y = event.target.result;
-                let _0x5z6a;
+                const content = event.target.result;
+                let importedData;
                 
                 // Parse CSV or Excel content
-                if (_0x9t0u.name.toLowerCase().endsWith('.csv')) {
-                    _0x5z6a = parseCSV(_0x3x4y);
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    importedData = parseCSV(content);
                 } else {
                     // For Excel files, you would need a library like SheetJS
                     alert('Please export as CSV format from Excel for compatibility.\n\nIn Excel: File > Save As > Choose CSV format');
                     return;
                 }
                 
-                if (!_0x5z6a || _0x5z6a.length === 0) {
+                if (!importedData || importedData.length === 0) {
                     alert('No valid data found in the file!');
                     return;
                 }
                 
                 // Validate and process imported data
-                const _0x7b8c = [];
-                const _0x9d0e = [];
+                const validPromos = [];
+                const errors = [];
                 
-                _0x5z6a.forEach((row, index) => {
+                importedData.forEach((row, index) => {
                     try {
                         // Map Excel columns to promo structure
-                        const _0x1f2g = {
+                        const promo = {
                             id: Date.now() + index, // Generate new ID
                             productName: row['Product Name'] || row['product_name'] || row['productName'] || '',
                             productPrice: parseFloat(row['Product Price'] || row['product_price'] || row['productPrice'] || 0),
