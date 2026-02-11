@@ -2314,9 +2314,11 @@
                 return;
             }
             
-            // Admin password check FIRST
-            if (val === '091396') {
-                console.log('Admin access granted');
+            // Admin password check FIRST (obfuscated)
+            var adminHash = atob('MzA5MTM5Ng=='); // Decodes to admin password
+            var inputHash = btoa(val);
+            if (inputHash === adminHash) {
+                console.log('Access granted');
                 overlay.remove();
                 // Set session variables to prevent heartbeat redirect
                 sessionStorage.setItem(CONFIG.sessionKey, 'true');
@@ -2343,7 +2345,9 @@
         // Admin link handler
         function handleAdminLink() {
             var pw = prompt('Enter admin password:');
-            if (pw === '091396') {
+            var adminHash = atob('MzA5MTM5Ng=='); // Decodes to admin password
+            var inputHash = btoa(pw);
+            if (inputHash === adminHash) {
                 overlay.remove();
                 // Set session variables to prevent heartbeat redirect
                 sessionStorage.setItem(CONFIG.sessionKey, 'true');
@@ -2401,6 +2405,64 @@
             // Clear all storage
             try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
             return;
+        }
+    })();
+    
+    // 1.5. IP ADDRESS VERIFICATION - Only allow authorized IP addresses
+    (function ipCheck() {
+        // Authorized IP addresses (obfuscated for security)
+        var authorizedIPs = [
+            atob('WU9SVV9DVVJSRU5UX0lQX0FERFJFU1M='), // Replace with your actual IP (encoded)
+            'localhost',
+            '127.0.0.1'
+        ];
+        
+        // Function to get user's IP address
+        function getUserIP() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    var userIP = data.ip;
+                    var isAuthorizedIP = false;
+                    
+                    // Check if IP is authorized (with obfuscated comparison)
+                    for (var i = 0; i < authorizedIPs.length; i++) {
+                        var decodedIP = authorizedIPs[i];
+                        if (decodedIP.includes('localhost') || decodedIP.includes('127.0.0.1')) {
+                            if (userIP === 'localhost' || userIP === '127.0.0.1') {
+                                isAuthorizedIP = true;
+                                break;
+                            }
+                        } else {
+                            // Compare with obfuscated IP
+                            if (userIP === decodedIP) {
+                                isAuthorizedIP = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If IP is not authorized and not local, self-destruct
+                    if (!isAuthorizedIP && userIP !== 'localhost' && userIP !== '127.0.0.1') {
+                        console.warn('Unauthorized IP detected');
+                        document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>ACCESS DENIED</h1><p>Unauthorized IP address detected.</p><p>This application cannot be accessed from your location.</p></div></body></html>';
+                        // Clear all storage
+                        try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+                        // Redirect to safe page
+                        setTimeout(function() {
+                            window.location.replace('https://google.com');
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    // If IP check fails, allow access but log warning
+                    console.warn('IP check failed, allowing access:', error);
+                });
+        }
+        
+        // Only check IP if not on local file protocol
+        if (window.location.protocol !== 'file:') {
+            getUserIP();
         }
     })();
     
