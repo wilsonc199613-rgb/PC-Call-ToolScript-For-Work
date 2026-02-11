@@ -2666,28 +2666,28 @@
     // 14. CONTINUOUS SESSION HEARTBEAT - Downloaded copies won't have valid session
     (function heartbeat() {
         var sessionValid = sessionStorage.getItem(CONFIG.sessionKey) === 'true';
-        var sessionTs = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey));
+        var sessionTs = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey) || '0');
         
         setInterval(function() {
             var currentSession = sessionStorage.getItem(CONFIG.sessionKey);
-            var currentTs = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey));
+            var currentTs = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey) || '0');
             
-            // If session was tampered with or doesn't exist
-            if (currentSession !== 'true' || currentTs !== sessionTs) {
-                if (currentSession !== 'true') {
-                    document.documentElement.innerHTML = '';
-                    window.location.replace('https://google.com');
-                }
+            // Only check if session exists, not if it matches exactly (too strict)
+            if (!currentSession || currentSession !== 'true') {
+                // Session was cleared or doesn't exist
+                return; // Don't redirect, just wait for user to enter PIN
             }
             
             // Check session expiry
-            var age = Date.now() - currentTs;
-            if (age > CONFIG.maxSessionHours * 60 * 60 * 1000) {
-                sessionStorage.clear();
-                alert('⏰ Session expired. Please get a new PIN.');
-                window.location.replace('https://google.com');
+            if (currentTs > 0) {
+                var age = Date.now() - currentTs;
+                if (age > CONFIG.maxSessionHours * 60 * 60 * 1000) {
+                    sessionStorage.clear();
+                    alert('⏰ Session expired. Please get a new PIN.');
+                    window.location.reload(); // Reload instead of redirect
+                }
             }
-        }, 10000);
+        }, 30000); // Check every 30 seconds instead of 10
     })();
     
     // ========== WATERMARK ==========
