@@ -2403,6 +2403,72 @@
             // Someone downloaded and re-hosted the site - DESTROY everything
             document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>ACCESS DENIED</h1><p>This is an unauthorized copy.</p><p>This website cannot be used outside its original domain.</p></div></body></html>';
             // Clear all storage
+            try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+            return;
+        }
+    })();
+    
+    // 1.5. IP ADDRESS VERIFICATION - Only log warnings, never block access
+    (function ipCheck() {
+        // Authorized IP addresses (obfuscated for security)
+        var authorizedIPs = [
+            atob('WU9SVV9DVVJSRU5UX0lQX0FERFJFU1M='), // Replace with your actual IP (encoded)
+            'localhost',
+            '127.0.0.1'
+        ];
+        
+        // Function to get user's IP address
+        function getUserIP() {
+            // Add timeout to prevent hanging
+            var timeoutId = setTimeout(function() {
+                console.warn('IP check timeout - allowing access');
+            }, 5000); // 5 second timeout
+            
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    clearTimeout(timeoutId);
+                    var userIP = data.ip;
+                    var isAuthorizedIP = false;
+                    
+                    // Check if IP is authorized (with obfuscated comparison)
+                    for (var i = 0; i < authorizedIPs.length; i++) {
+                        var decodedIP = authorizedIPs[i];
+                        if (decodedIP.includes('localhost') || decodedIP.includes('127.0.0.1')) {
+                            if (userIP === 'localhost' || userIP === '127.0.0.1') {
+                                isAuthorizedIP = true;
+                                break;
+                            }
+                        } else {
+                            // Compare with obfuscated IP
+                            if (userIP === decodedIP) {
+                                isAuthorizedIP = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If IP is not authorized, log a warning but DO NOT block
+                    if (!isAuthorizedIP && userIP !== 'localhost' && userIP !== '127.0.0.1') {
+                        console.warn('Unauthorized IP detected:', userIP, 'PIN entry will be required.');
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    // If IP check fails, allow access but log warning
+                    console.warn('IP check failed, allowing access:', error);
+                });
+        }
+        
+        // Only check IP if not on local file protocol
+        if (window.location.protocol !== 'file:') {
+            getUserIP();
+        }
+    })();
+    
+    // 2. IFRAME PROTECTION - Prevent embedding in other sites
+    if (window.self !== window.top) {
+        // Site is being loaded in an iframe (common scraper technique)
         try { window.top.location = window.self.location; } catch(e) {
             document.documentElement.innerHTML = '';
         }
