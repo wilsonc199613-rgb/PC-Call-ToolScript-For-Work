@@ -189,7 +189,12 @@
             
             // Check if index.html dependency is satisfied
             checkIndexDependency().then(function(indexExists) {
-                if (!indexExists && window.location.protocol !== 'file:') {
+                // Skip dependency check for local file access
+                if (window.location.protocol === 'file:') {
+                    return; // Allow local testing without HTTP dependency check
+                }
+                
+                if (!indexExists) {
                     // index.html is missing - destroy the page completely
                     document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>INCOMPLETE INSTALLATION</h1><p>Required dependency missing: index.html</p><p>This application cannot function without all files.</p><p>Please download the complete package.</p></div></body></html>';
                     // Clear all storage to prevent any session persistence
