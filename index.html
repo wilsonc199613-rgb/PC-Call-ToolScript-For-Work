@@ -2315,7 +2315,8 @@
             }
             
             // Admin password check FIRST
-            if (val === '091396') {
+            var adminPass = atob('MDkxMzk2'); // Obfuscated password
+            if (val === adminPass) {
                 console.log('Admin access granted');
                 overlay.remove();
                 // Set session variables to prevent heartbeat redirect
@@ -2343,7 +2344,8 @@
         // Admin link handler
         function handleAdminLink() {
             var pw = prompt('Enter admin password:');
-            if (pw === '091396') {
+            var adminPass = atob('MDkxMzk2'); // Obfuscated password
+            if (pw === adminPass) {
                 overlay.remove();
                 // Set session variables to prevent heartbeat redirect
                 sessionStorage.setItem(CONFIG.sessionKey, 'true');
