@@ -2267,12 +2267,29 @@
     
     // ========== MAIN AUTH FLOW ==========
     
+    // DEBUG: Add session clearing functionality
+    // Press Ctrl+Shift+X to clear session and force PIN prompt
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'X') {
+            e.preventDefault();
+            sessionStorage.removeItem(CONFIG.sessionKey);
+            sessionStorage.removeItem(CONFIG.sessionTimeKey);
+            sessionStorage.removeItem('device-fingerprint');
+            localStorage.clear();
+            alert('Session cleared! Refreshing page...');
+            window.location.reload();
+        }
+    });
+    
     var existingSession = sessionStorage.getItem(CONFIG.sessionKey);
     var sessionTime = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey) || '0');
     var sessionAge = Date.now() - sessionTime;
     var maxSessionMs = CONFIG.maxSessionHours * 60 * 60 * 1000;
     
-    if (existingSession === 'true' && sessionTime > 0 && sessionAge < maxSessionMs) {
+    // DEBUG: Always show PIN prompt for testing (remove this in production)
+    var forceShowPin = true; // Set to false to use normal session logic
+    
+    if (existingSession === 'true' && sessionTime > 0 && sessionAge < maxSessionMs && !forceShowPin) {
         console.log('Active session found. Expires in ' + Math.round((maxSessionMs - sessionAge) / 60000) + ' min.');
     } else {
         sessionStorage.removeItem(CONFIG.sessionKey);
