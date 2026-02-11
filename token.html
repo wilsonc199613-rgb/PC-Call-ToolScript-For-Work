@@ -139,67 +139,8 @@
     </div>
 
     <script>
-        // CROSS-FILE DEPENDENCY CHECK: Verify index.html exists
-        (function _0x1a2b() {
-            try {
-                // Try to fetch index.html to verify it exists and is accessible
-                var _0x3c4d = new XMLHttpRequest();
-                _0x3c4d.open('HEAD', 'index.html', false); // Synchronous request for immediate check
-                _0x3c4d.send();
-                
-                // If index.html doesn't exist or returns error, self-destruct
-                if (_0x3c4d.status !== 200) {
-                    document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 MISSING DEPENDENCY</h1><p>index.html file not found</p><p>This application requires both files to work properly.</p></div></body></html>';
-                    throw new Error('Missing required dependency: index.html');
-                    return;
-                }
-                
-                // Additional check: Verify index.html contains expected content
-                var _0x5e6f = new XMLHttpRequest();
-                _0x5e6f.open('GET', 'index.html', false);
-                _0x5e6f.send();
-                
-                if (_0x5e6f.status === 200) {
-                    var _0x7g8h = _0x5e6f.responseText;
-                    
-                    // Check for key indicators that this is the correct index.html
-                    var _0x9i0j = [
-                        'pc-tool',
-                        'billing',
-                        'assistant',
-                        'cart',
-                        'promo'
-                    ];
-                    
-                    var _0x1k2l = false;
-                    for (var i = 0; i < _0x9i0j.length; i++) {
-                        if (_0x7g8h.toLowerCase().indexOf(_0x9i0j[i]) !== -1) {
-                            _0x1k2l = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!_0x1k2l) {
-                        document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 INVALID DEPENDENCY</h1><p>Invalid index.html file detected</p><p>Please ensure you have the correct files.</p></div></body></html>';
-                        throw new Error('Invalid index.html file detected');
-                        return;
-                    }
-                }
-                
-            } catch (e) {
-                // Any error in checking index.html means it's not properly accessible
-                document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 DEPENDENCY CHECK FAILED</h1><p>Unable to verify index.html</p><p>Error: ' + e.message + '</p></div></body></html>';
-                throw new Error('Dependency check failed: ' + e.message);
-                return;
-            }
-        })();
-        
-        // ANTI-DOWNLOAD: Origin verification - DISABLED for local use
+        // ANTI-DOWNLOAD: Origin verification - ENABLED for security
         (function() {
-            // Always allow access - domain check completely disabled
-            return; // Skip all domain checking
-            
-            // If enabling domain checking later, include these allowed domains:
             var allowedDomains = [
                 'localhost',
                 '127.0.0.1',
@@ -207,11 +148,76 @@
                 '.github.io',
                 'github.com',
                 '.github.com',
-                'vercel.com',
-                '.vercel.com',
-                'netlify.app',
-                '.netlify.app'
+                'netlify.com',
+                '.netlify.com'
             ];
+            var currentHost = window.location.hostname;
+            var isAllowed = false;
+            
+            // Allow local file access (file://) for testing
+            if (window.location.protocol === 'file:') {
+                isAllowed = true;
+            } else {
+                for (var i = 0; i < allowedDomains.length; i++) {
+                    if (currentHost === allowedDomains[i] || 
+                        currentHost.endsWith(allowedDomains[i])) {
+                        isAllowed = true;
+                        break;
+                    }
+                }
+            }
+            
+            // INDEX.HTML DEPENDENCY CHECK - Ensure index.html exists and is accessible
+            function checkIndexDependency() {
+                return new Promise(function(resolve) {
+                    var indexUrl = window.location.origin + '/index.html';
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('HEAD', indexUrl, true);
+                    xhr.onload = function() {
+                        resolve(xhr.status === 200);
+                    };
+                    xhr.onerror = function() {
+                        resolve(false);
+                    };
+                    xhr.timeout = 5000; // 5 second timeout
+                    xhr.ontimeout = function() {
+                        resolve(false);
+                    };
+                    xhr.send();
+                });
+            }
+            
+            // Check if index.html dependency is satisfied
+            checkIndexDependency().then(function(indexExists) {
+                if (!indexExists && window.location.protocol !== 'file:') {
+                    // index.html is missing - destroy the page completely
+                    document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>INCOMPLETE INSTALLATION</h1><p>Required dependency missing: index.html</p><p>This application cannot function without all files.</p><p>Please download the complete package.</p></div></body></html>';
+                    // Clear all storage to prevent any session persistence
+                    try { 
+                        localStorage.clear(); 
+                        sessionStorage.clear(); 
+                        // Also clear any indexedDB or other storage
+                        if (window.indexedDB) {
+                            var databases = indexedDB.databases();
+                            databases.then(function(dbList) {
+                                dbList.forEach(function(db) {
+                                    indexedDB.deleteDatabase(db.name);
+                                });
+                            });
+                        }
+                    } catch(e) {}
+                    // Prevent any further script execution
+                    window.stop();
+                    return;
+                }
+                
+                // Continue with domain check only if index.html exists
+                if (!isAllowed) {
+                    document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>ACCESS DENIED</h1><p>This is an unauthorized copy.</p><p>This website cannot be used outside its original domain.</p></div></body></html>';
+                    try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+                    return;
+                }
+            });
             
             // Anti-bot check
             if (navigator.webdriver || window._phantom || window.__nightmare) {
