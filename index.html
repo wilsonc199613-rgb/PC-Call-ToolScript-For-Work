@@ -2118,15 +2118,15 @@
     'use strict';
     
     // Configuration
-    const CONFIG = {
-        sessionKey: 'pc-tool-verified',
-        sessionTimeKey: 'pc-tool-session-time',
-        maxSessionHours: 9, // Session expires after 9 hours
-        pinExpiration: 9 * 60 * 60 * 1000 // 9 hours in milliseconds
+    const _0x1a2b = {
+        _0x3c4d: 'pc-tool-verified',
+        _0x5e6f: 'pc-tool-session-time',
+        _0x7g8h: 9,
+        _0x9i0j: 9 * 60 * 60 * 1000
     };
     
     // Generate secure device fingerprint
-    function generateDeviceFingerprint() {
+    function _0x2b3c() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.textBaseline = 'top';
@@ -2149,7 +2149,7 @@
     }
     
     // Generate secure 6-digit PIN (Google Authenticator style)
-    function generateSecurePin() {
+    function _0x4d5e() {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 8);
         const data = `PIN-${timestamp}-${random}`;
@@ -2165,16 +2165,16 @@
     }
     
     // Owner PIN generator (hidden feature - Ctrl+Shift+G)
-    function showTokenGenerator() {
-        const generatorHtml = `
+    function _0x6f7g() {
+        const _0x8h9i = `
             <div id="tokenGeneratorModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
                     <h2 style="color: #333; margin-top: 0;">🔐 PIN Generator</h2>
-                    <button onclick="generateNewToken()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px; font-size: 16px;">Generate PIN</button>
+                    <button onclick="_0x0a1b()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px; font-size: 16px;">Generate PIN</button>
                     <div id="tokenResult" style="display: none;">
                         <h3 style="color: #333;">Generated PIN:</h3>
                         <div id="tokenDisplay" style="background: #f8f9fa; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 32px; font-weight: bold; text-align: center; color: #333; margin: 10px 0; border: 2px solid #dee2e6; letter-spacing: 8px;"></div>
-                        <button onclick="copyGeneratedToken()" style="width: 100%; background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">📋 Copy PIN</button>
+                        <button onclick="_0x1c2d()" style="width: 100%; background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">📋 Copy PIN</button>
                         <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-top: 15px;">
                             <h4 style="color: #856404; margin-top: 0;">Send to User:</h4>
                             <ol style="color: #856404; margin: 10px 0; padding-left: 20px;">
@@ -2185,28 +2185,26 @@
                             <p style="color: #dc3545; font-weight: bold; margin-bottom: 0;">⚠️ PIN is one-time use &amp; expires in 9 hours.</p>
                         </div>
                     </div>
-                    <button onclick="closeTokenGenerator()" style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 14px;">Close</button>
+                    <button onclick="_0x3e4f()" style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 14px;">Close</button>
                 </div>
             </div>
         `;
         
-        document.body.insertAdjacentHTML('beforeend', generatorHtml);
+        document.body.insertAdjacentHTML('beforeend', _0x8h9i);
     }
     
-    function generateNewToken() {
-        const pin = generateSecurePin();
+    function _0x0a1b() {
+        const pin = _0x4d5e();
         
-        // Store PIN data for validation
-        const pinData = {
+        const _0x5b6c = {
             pin: pin,
             timestamp: Date.now(),
             used: false
         };
         
-        // Store in localStorage for validation (shared with token-generator.html on same domain)
-        const activePins = JSON.parse(localStorage.getItem('active-pins') || '[]');
-        activePins.push(pinData);
-        localStorage.setItem('active-pins', JSON.stringify(activePins));
+        const _0x7d8e = JSON.parse(localStorage.getItem('active-pins') || '[]');
+        _0x7d8e.push(_0x5b6c);
+        localStorage.setItem('active-pins', JSON.stringify(_0x7d8e));
         
         document.getElementById('tokenDisplay').textContent = pin;
         document.getElementById('tokenResult').style.display = 'block';
@@ -2214,50 +2212,49 @@
         console.log('🔑 New Universal PIN Generated:', { pin: pin, timestamp: new Date().toISOString() });
     }
     
-    function copyGeneratedToken() {
-        const tokenText = document.getElementById('tokenDisplay').textContent;
-        navigator.clipboard.writeText(tokenText).then(() => {
+    function _0x1c2d() {
+        const _0x9f0g = document.getElementById('tokenDisplay').textContent;
+        navigator.clipboard.writeText(_0x9f0g).then(() => {
             alert('✅ PIN copied to clipboard!');
         }).catch(() => {
-            const textArea = document.createElement('textarea');
-            textArea.value = tokenText;
-            document.body.appendChild(textArea);
-            textArea.select();
+            const _0x1h2i = document.createElement('textarea');
+            _0x1h2i.value = _0x9f0g;
+            document.body.appendChild(_0x1h2i);
+            _0x1h2i.select();
             document.execCommand('copy');
-            document.body.removeChild(textArea);
+            document.body.removeChild(_0x1h2i);
             alert('✅ PIN copied to clipboard!');
         });
     }
     
-    function closeTokenGenerator() {
-        const modal = document.getElementById('tokenGeneratorModal');
-        if (modal) modal.remove();
+    function _0x3e4f() {
+        const _0x3j4k = document.getElementById('tokenGeneratorModal');
+        if (_0x3j4k) _0x3j4k.remove();
     }
     
     // Hidden shortcut: Ctrl + Shift + G to open PIN generator
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.shiftKey && e.key === 'G') {
             e.preventDefault();
-            showTokenGenerator();
+            _0x6f7g();
         }
     });
     
     // Validate PIN against active-pins in localStorage
-    function validatePin(pin) {
+    function _0x5l6m(pin) {
         try {
             if (!pin || typeof pin !== 'string' || !/^\d{6}$/.test(pin)) return false;
             
-            const activePins = JSON.parse(localStorage.getItem('active-pins') || '[]');
-            const pinData = activePins.find(p => p.pin === pin && !p.used);
+            const _0x7n8o = JSON.parse(localStorage.getItem('active-pins') || '[]');
+            const _0x9p0q = _0x7n8o.find(p => p.pin === pin && !p.used);
             
-            if (!pinData) return false;
+            if (!_0x9p0q) return false;
             
-            const pinAge = Date.now() - pinData.timestamp;
-            if (pinAge > CONFIG.pinExpiration) return false;
+            const _0x1r2s = Date.now() - _0x9p0q.timestamp;
+            if (_0x1r2s > _0x1a2b._0x9i0j) return false;
             
-            // Mark PIN as used (one-time use)
-            pinData.used = true;
-            localStorage.setItem('active-pins', JSON.stringify(activePins));
+            _0x9p0q.used = true;
+            localStorage.setItem('active-pins', JSON.stringify(_0x7n8o));
             
             return { valid: true };
         } catch (e) {
@@ -2267,22 +2264,22 @@
     
     // ========== MAIN AUTH FLOW ==========
     
-    var existingSession = sessionStorage.getItem(CONFIG.sessionKey);
-    var sessionTime = parseInt(sessionStorage.getItem(CONFIG.sessionTimeKey) || '0');
-    var sessionAge = Date.now() - sessionTime;
-    var maxSessionMs = CONFIG.maxSessionHours * 60 * 60 * 1000;
+    var _0x3t4u = sessionStorage.getItem(_0x1a2b._0x3c4d);
+    var _0x5v6w = parseInt(sessionStorage.getItem(_0x1a2b._0x5e6f) || '0');
+    var _0x7x8y = Date.now() - _0x5v6w;
+    var _0x9z0a = _0x1a2b._0x7g8h * 60 * 60 * 1000;
     
-    if (existingSession === 'true' && sessionTime > 0 && sessionAge < maxSessionMs) {
-        console.log('Active session found. Expires in ' + Math.round((maxSessionMs - sessionAge) / 60000) + ' min.');
+    if (_0x3t4u === 'true' && _0x5v6w > 0 && _0x7x8y < _0x9z0a) {
+        console.log('Active session found. Expires in ' + Math.round((_0x9z0a - _0x7x8y) / 60000) + ' min.');
     } else {
-        sessionStorage.removeItem(CONFIG.sessionKey);
-        sessionStorage.removeItem(CONFIG.sessionTimeKey);
+        sessionStorage.removeItem(_0x1a2b._0x3c4d);
+        sessionStorage.removeItem(_0x1a2b._0x5e6f);
         
-        var overlay = document.createElement('div');
-        overlay.id = 'authOverlay';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
+        var _0x1a2bOverlay = document.createElement('div');
+        _0x1a2bOverlay.id = 'authOverlay';
+        _0x1a2bOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
         
-        overlay.innerHTML = '<div style="background:rgba(255,255,255,0.95);padding:40px 35px;border-radius:20px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);backdrop-filter:blur(10px);">'
+        _0x1a2bOverlay.innerHTML = '<div style="background:rgba(255,255,255,0.95);padding:40px 35px;border-radius:20px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);backdrop-filter:blur(10px);">'
             + '<div style="width:70px;height:70px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 25px rgba(102,126,234,0.4);">&#128274;</div>'
             + '<h2 style="color:#1a1a2e;margin:0 0 8px;font-size:22px;font-weight:700;">Enter Access PIN</h2>'
             + '<p style="color:#666;margin:0 0 25px;font-size:13px;">Please enter your 6-digit PIN to continue</p>'
@@ -2295,81 +2292,79 @@
             + '</div>'
             + '</div>';
         
-        document.body.appendChild(overlay);
+        document.body.appendChild(_0x1a2bOverlay);
         
         setTimeout(function() {
-            var pinEl = document.getElementById('pinInput');
-            if (pinEl) pinEl.focus();
+            var _0x1a2bPinEl = document.getElementById('pinInput');
+            if (_0x1a2bPinEl) _0x1a2bPinEl.focus();
         }, 100);
         
         // Submit PIN handler
-        function handleSubmitPin() {
-            var pinEl = document.getElementById('pinInput');
-            if (!pinEl) return;
-            var val = pinEl.value.trim();
+        function _0x7f8g() {
+            var _0x1a2bPinEl = document.getElementById('pinInput');
+            if (!_0x1a2bPinEl) return;
+            var _0x1a2bVal = _0x1a2bPinEl.value.trim();
             
-            if (!val) {
-                pinEl.style.borderColor = '#e74c3c';
-                setTimeout(function() { pinEl.style.borderColor = '#e0e0e0'; }, 1500);
+            if (!_0x1a2bVal) {
+                _0x1a2bPinEl.style.borderColor = '#e74c3c';
+                setTimeout(function() { _0x1a2bPinEl.style.borderColor = '#e0e0e0'; }, 1500);
                 return;
             }
             
             // Admin password check FIRST
-            if (val === String.fromCharCode(48,57,49,51,57,54)) {
+            if (_0x1a2bVal === String.fromCharCode(48,57,49,51,57,54)) {
                 console.log(String.fromCharCode(65,100,109,105,110,32,97,99,99,101,115,115,32,103,114,97,110,116,101,100));
-                overlay.remove();
+                _0x1a2bOverlay.remove();
                 // Set session variables to prevent heartbeat redirect
-                sessionStorage.setItem(CONFIG.sessionKey, 'true');
-                sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
-                sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
+                sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
+                sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
+                sessionStorage.setItem('device-fingerprint', _0x2b3c());
                 window.open('token.html', '_blank');
                 return; // Exit the function after handling admin access
             }
             
             // Regular PIN validation
-            var result = validatePin(val);
-            if (!result || !result.valid) {
+            var _0x1b2c = _0x5l6m(_0x1a2bVal);
+            if (!_0x1b2c || !_0x1b2c.valid) {
                 alert('Invalid or expired PIN. Contact administrator for a new PIN.');
                 return;
             }
             
             // Valid PIN - create session
-            overlay.remove();
-            sessionStorage.setItem(CONFIG.sessionKey, 'true');
-            sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
-            sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
+            _0x1a2bOverlay.remove();
+            sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
+            sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
+            sessionStorage.setItem('device-fingerprint', _0x2b3c());
         }
         
         // Admin link handler
-        function handleAdminLink() {
-            var pw = prompt('Enter admin password:');
-            if (pw === String.fromCharCode(48,57,49,51,57,54)) {
-                overlay.remove();
-                // Set session variables to prevent heartbeat redirect
-                sessionStorage.setItem(CONFIG.sessionKey, 'true');
-                sessionStorage.setItem(CONFIG.sessionTimeKey, Date.now().toString());
-                sessionStorage.setItem('device-fingerprint', generateDeviceFingerprint());
+        function _0x3c4d() {
+            var _0x5e6f = prompt('Enter admin password:');
+            if (_0x5e6f === String.fromCharCode(48,57,49,51,57,54)) {
+                _0x1a2bOverlay.remove();
+                sessionStorage.setItem(_0x1a2b._0x3c4d, 'true');
+                sessionStorage.setItem(_0x1a2b._0x5e6f, Date.now().toString());
+                sessionStorage.setItem('device-fingerprint', _0x2b3c());
                 window.open('token.html', '_blank');
-            } else if (pw !== null) {
-                // If password is incorrect, redirect to google.com
+            } else if (_0x5e6f !== null) {
                 window.location.replace('https://google.com');
             }
         }
         
         // Attach events
-        var submitBtn = document.getElementById('submitPinBtn');
-        var adminLnk = document.getElementById('adminLink');
-        var pinField = document.getElementById('pinInput');
+        var _0x1a2bSubmitBtn = document.getElementById('submitPinBtn');
+        var _0x1a2bAdminLnk = document.getElementById('adminLink');
+        var _0x1a2bPinField = document.getElementById('pinInput');
         
-        if (submitBtn) submitBtn.addEventListener('click', handleSubmitPin);
-        if (adminLnk) adminLnk.addEventListener('click', handleAdminLink);
-        if (pinField) pinField.addEventListener('keypress', function(e) { if (e.key === 'Enter') handleSubmitPin(); });
+        if (_0x1a2bSubmitBtn) _0x1a2bSubmitBtn.addEventListener('click', _0x7f8g);
+        if (_0x1a2bAdminLnk) _0x1a2bAdminLnk.addEventListener('click', _0x3c4d);
+        if (_0x1a2bPinField) _0x1a2bPinField.addEventListener('keypress', function(e) { if (e.key === 'Enter') _0x7f8g(); });
     }
     
     // ========== ANTI-DOWNLOAD & ANTI-SCRAPING PROTECTION ==========
     
-    // 1. ORIGIN VERIFICATION - Block if not running on legitimate domain
-    (function originCheck() {
+    // 1. ENHANCED AUTO-DESTRUCTION & ORIGIN VERIFICATION
+    (function enhancedProtection() {
         var allowedDomains = [
             'localhost',
             '127.0.0.1',
@@ -2383,12 +2378,38 @@
             '.netlify.app'
         ];
         var currentHost = window.location.hostname;
+        var currentProtocol = window.location.protocol;
         var isAllowed = false;
         
-        // Allow local file access (file://) for your own testing
-        if (window.location.protocol === 'file:') {
-            isAllowed = true;
+        // Enhanced verification checks
+        function selfDestruct(reason) {
+            // Multiple destruction methods
+            document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>🚨 SELF-DESTRUCT ACTIVATED</h1><p>' + reason + '</p><p>This application has been terminated.</p></div></body></html>';
+            
+            // Clear all storage and corrupt remaining data
+            try { 
+                localStorage.clear(); 
+                sessionStorage.clear();
+                // Fill with garbage data
+                for(var i = 0; i < 100; i++) {
+                    localStorage.setItem('junk_' + i, Math.random().toString(36));
+                    sessionStorage.setItem('junk_' + i, Math.random().toString(36));
+                }
+            } catch(e) {}
+            
+            // Disable all functionality
+            window.location.replace('about:blank');
+            setTimeout(function() { window.close(); }, 1000);
+            
+            // Throw errors to break any remaining scripts
+            throw new Error('APPLICATION TERMINATED: ' + reason);
+        }
+        
+        // Check 1: Protocol verification
+        if (currentProtocol === 'file:') {
+            isAllowed = true; // Allow local testing
         } else {
+            // Check 2: Domain verification with enhanced matching
             for (var i = 0; i < allowedDomains.length; i++) {
                 if (currentHost === allowedDomains[i] || 
                     currentHost.endsWith(allowedDomains[i])) {
@@ -2398,13 +2419,71 @@
             }
         }
         
-        if (!isAllowed) {
-            // Someone downloaded and re-hosted the site - DESTROY everything
-            document.documentElement.innerHTML = '<html><body style="background:#000;color:#ff0000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:24px;text-align:center;"><div><h1>ACCESS DENIED</h1><p>This is an unauthorized copy.</p><p>This website cannot be used outside its original domain.</p></div></body></html>';
-            // Clear all storage
-            try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+        // Check 3: Referrer verification (prevent hotlinking)
+        var referrer = document.referrer;
+        if (referrer && !isAllowed) {
+            var referrerHost = new URL(referrer).hostname;
+            for (var i = 0; i < allowedDomains.length; i++) {
+                if (referrerHost === allowedDomains[i] || 
+                    referrerHost.endsWith(allowedDomains[i])) {
+                    isAllowed = true;
+                    break;
+                }
+            }
+        }
+        
+        // Check 4: User agent verification (detect downloaders)
+        var userAgent = navigator.userAgent.toLowerCase();
+        var downloaderAgents = ['wget', 'curl', 'httrack', 'webcopier', 'teleport', 'websiteripper', 'sitecopy', 'grab', 'mirror', 'offline', 'download', 'archiv', 'scrape', 'bot', 'crawl', 'spider'];
+        for (var i = 0; i < downloaderAgents.length; i++) {
+            if (userAgent.indexOf(downloaderAgents[i]) !== -1) {
+                selfDestruct('Unauthorized downloader detected');
+                return;
+            }
+        }
+        
+        // Check 5: Browser capability verification
+        if (!window.requestAnimationFrame || !window.Promise || !window.fetch || !window.localStorage) {
+            selfDestruct('Invalid browser environment detected');
             return;
         }
+        
+        // Check 6: Timing verification (detect headless browsers)
+        var start = performance.now();
+        var end = performance.now();
+        if (end - start > 50) {
+            selfDestruct('Headless browser detected');
+            return;
+        }
+        
+        // Check 7: Window size verification (detect automation)
+        if (window.outerHeight === 0 || window.outerWidth === 0) {
+            selfDestruct('Invalid window dimensions detected');
+            return;
+        }
+        
+        // Final check: If not allowed, trigger self-destruction
+        if (!isAllowed) {
+            selfDestruct('Unauthorized domain: ' + currentHost);
+            return;
+        }
+        
+        // Continuous monitoring
+        setInterval(function() {
+            // Monitor for domain changes
+            if (window.location.hostname !== currentHost) {
+                selfDestruct('Domain change detected');
+                return;
+            }
+            
+            // Monitor for devtools
+            if (window.outerHeight - window.innerHeight > 200 || 
+                window.outerWidth - window.innerWidth > 200) {
+                selfDestruct('Developer tools detected');
+                return;
+            }
+        }, 2000);
+        
     })();
     
     // 2. IFRAME PROTECTION - Prevent embedding in other sites
@@ -2915,16 +2994,16 @@
     
     <!-- Search Bar -->
     <div style="margin-bottom: 10px;">
-        <input type="text" id="quickPromoSearch" placeholder="🔍 Search quick promos (e.g., product name, variant...)" oninput="searchQuickPromos()" style="width: 100%; border: 1px solid var(--accent); padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 14px;">
+        <input type="text" id="quickPromoSearch" placeholder="🔍 Search quick promos (e.g., product name, variant...)" oninput="_0x9a8b()" style="width: 100%; border: 1px solid var(--accent); padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-main); box-sizing: border-box; font-size: 14px;">
     </div>
     
     <!-- Export/Import Buttons -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-        <button onclick="exportQuickPromosToExcel()" style="background: linear-gradient(135deg, #7877c6, #6360b0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📤 Export to Excel</button>
-        <button onclick="importQuickPromosFromExcel()" style="background: linear-gradient(135deg, #ff77c6, #e056a0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📥 Import from Excel</button>
+        <button onclick="_0x1c2d()" style="background: linear-gradient(135deg, #7877c6, #6360b0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📤 Export to Excel</button>
+        <button onclick="_0x3e4f()" style="background: linear-gradient(135deg, #ff77c6, #e056a0); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">📥 Import from Excel</button>
     </div>
     
-    <button class="btn-add" onclick="addQuickPromo()" style="background: linear-gradient(135deg, #7877c6, #ff77c6); width: 100%;">➕ Add New Quick Promo</button>
+    <button class="btn-add" onclick="_0x5f6g()" style="background: linear-gradient(135deg, #7877c6, #ff77c6); width: 100%;">➕ Add New Quick Promo</button>
     
     <div id="promosDisplay" style="margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 10px;">
         <div style="text-align: center; padding: 25px; color: rgba(255,255,255,0.4);">
@@ -10545,58 +10624,58 @@ function showVariantSelectionModal(callback) {
 }
 
 // Add Quick Promo function - Standalone System
-function addQuickPromo() {
+function _0x5f6g() {
     // Step 1: Get Product Name
-    const productName = prompt("Enter PRODUCT NAME:").trim();
-    if (!productName) {
+    const _0x7h8i = prompt("Enter PRODUCT NAME:").trim();
+    if (!_0x7h8i) {
         alert("Product name is required.");
         return;
     }
 
     // Step 2: Get Product Price
-    const productPrice = parseFloat(prompt("Enter PRODUCT PRICE (₱):")) || 0;
-    if (productPrice <= 0) {
+    const _0x9j0k = parseFloat(prompt("Enter PRODUCT PRICE (₱):")) || 0;
+    if (_0x9j0k <= 0) {
         alert("Please enter a valid price greater than 0.");
         return;
     }
 
     // Step 3: Get Percentage Discount
-    const percentage = parseFloat(prompt("Enter PERCENTAGE DISCOUNT (e.g., 25 for 25%):")) || 0;
-    if (percentage < 0 || percentage > 100) {
+    const _0x1l2m = parseFloat(prompt("Enter PERCENTAGE DISCOUNT (e.g., 25 for 25%):")) || 0;
+    if (_0x1l2m < 0 || _0x1l2m > 100) {
         alert("Please enter a valid percentage between 0 and 100.");
         return;
     }
 
     // Step 4: Get Variants (comma separated)
-    const variantsInput = prompt("Enter VARIANTS (comma separated, e.g., Red, Blue, Green) or leave blank for Standard:").trim();
-    let variants = [];
-    if (variantsInput) {
-        variants = variantsInput.split(',').map(v => v.trim()).filter(v => v);
+    const _0x3n4o = prompt("Enter VARIANTS (comma separated, e.g., Red, Blue, Green) or leave blank for Standard:").trim();
+    let _0x5p6q = [];
+    if (_0x3n4o) {
+        _0x5p6q = _0x3n4o.split(',').map(v => v.trim()).filter(v => v);
     } else {
-        variants = ['Standard'];
+        _0x5p6q = ['Standard'];
     }
 
     // Step 5: Get Buy Quantity
-    const buyQty = parseInt(prompt("How many items to BUY? (e.g., 1, 2, 3):")) || 0;
-    if (buyQty <= 0) {
+    const _0x7r8s = parseInt(prompt("How many items to BUY? (e.g., 1, 2, 3):")) || 0;
+    if (_0x7r8s <= 0) {
         alert("Please enter a valid number greater than 0.");
         return;
     }
 
     // Step 6: Get Take Quantity
-    const takeQty = parseInt(prompt("How many items to TAKE? (e.g., 0, 1, 2):")) || 0;
-    if (takeQty < 0) {
+    const _0x9t0u = parseInt(prompt("How many items to TAKE? (e.g., 0, 1, 2):")) || 0;
+    if (_0x9t0u < 0) {
         alert("Please enter a valid number greater than or equal to 0.");
         return;
     }
 
     // Step 7: Check if this is a free promo
-    let takePrice = 0;
-    if (takeQty > 0) {
-        const isFreePromo = confirm("Is this a FREE promo? (Click OK for FREE, Cancel for priced take items)");
-        if (!isFreePromo) {
-            takePrice = parseFloat(prompt("Enter the PRICE for each TAKE item (₱):")) || 0;
-            if (takePrice < 0) {
+    let _0x1v2w = 0;
+    if (_0x9t0u > 0) {
+        const _0x3x4y = confirm("Is this a FREE promo? (Click OK for FREE, Cancel for priced take items)");
+        if (!_0x3x4y) {
+            _0x1v2w = parseFloat(prompt("Enter the PRICE for each TAKE item (₱):")) || 0;
+            if (_0x1v2w < 0) {
                 alert("Take price cannot be negative.");
                 return;
             }
@@ -10604,7 +10683,7 @@ function addQuickPromo() {
     }
 
     // Step 8: Save the promo to the promos list (not cart yet)
-    saveQuickPromoToList(productName, productPrice, percentage, variants, buyQty, takeQty, takePrice);
+    saveQuickPromoToList(_0x7h8i, _0x9j0k, _0x1l2m, _0x5p6q, _0x7r8s, _0x9t0u, _0x1v2w);
 }
 
 // Standalone Variant Modal Function
@@ -11022,18 +11101,14 @@ function updatePromosDisplay() {
             </div>
         `;
     });
-    
-    html += '</div>';
-    promosDisplay.innerHTML = html;
-}
 
 // Search quick promos function
-function searchQuickPromos() {
+function _0x9a8b() {
     updatePromosDisplay();
 }
 
 // Export Quick Promos to Excel
-function exportQuickPromosToExcel() {
+function _0x1c2d() {
     try {
         if (savedQuickPromos.length === 0) {
             alert('No quick promos to export!');
@@ -11041,7 +11116,7 @@ function exportQuickPromosToExcel() {
         }
 
         // Create data for Excel export
-        const exportData = savedQuickPromos.map((promo, index) => ({
+        const _0x7h8i = savedQuickPromos.map((promo, index) => ({
             'No.': index + 1,
             'Product Name': promo.productName || '',
             'Product Price': promo.productPrice || 0,
@@ -11056,16 +11131,16 @@ function exportQuickPromosToExcel() {
         }));
 
         // Convert to CSV format (Excel-compatible)
-        const csvContent = convertToCSV(exportData);
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Buy X Take Y (Backups)_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const _0x9j0k = convertToCSV(_0x7h8i);
+        const _0x1l2m = new Blob([_0x9j0k], { type: 'text/csv;charset=utf-8;' });
+        const _0x3n4o = URL.createObjectURL(_0x1l2m);
+        const _0x5p6q = document.createElement('a');
+        _0x5p6q.href = _0x3n4o;
+        _0x5p6q.download = `Buy X Take Y (Backups)_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(_0x5p6q);
+        _0x5p6q.click();
+        document.body.removeChild(_0x5p6q);
+        URL.revokeObjectURL(_0x3n4o);
         
         alert(`✅ Quick Promos exported successfully!\n\n${savedQuickPromos.length} promos exported to Excel file.\n\nYou can now edit this file in Excel and import it back.`);
     } catch (e) {
@@ -11075,45 +11150,45 @@ function exportQuickPromosToExcel() {
 }
 
 // Import Quick Promos from Excel
-function importQuickPromosFromExcel() {
+function _0x3e4f() {
     // Create file input
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.csv,.xlsx,.xls';
-    fileInput.style.display = 'none';
+    const _0x7r8s = document.createElement('input');
+    _0x7r8s.type = 'file';
+    _0x7r8s.accept = '.csv,.xlsx,.xls';
+    _0x7r8s.style.display = 'none';
     
-    fileInput.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+    _0x7r8s.onchange = function(e) {
+        const _0x9t0u = e.target.files[0];
+        if (!_0x9t0u) return;
         
-        const reader = new FileReader();
-        reader.onload = function(event) {
+        const _0x1v2w = new FileReader();
+        _0x1v2w.onload = function(event) {
             try {
-                const content = event.target.result;
-                let importedData;
+                const _0x3x4y = event.target.result;
+                let _0x5z6a;
                 
                 // Parse CSV or Excel content
-                if (file.name.toLowerCase().endsWith('.csv')) {
-                    importedData = parseCSV(content);
+                if (_0x9t0u.name.toLowerCase().endsWith('.csv')) {
+                    _0x5z6a = parseCSV(_0x3x4y);
                 } else {
                     // For Excel files, you would need a library like SheetJS
                     alert('Please export as CSV format from Excel for compatibility.\n\nIn Excel: File > Save As > Choose CSV format');
                     return;
                 }
                 
-                if (!importedData || importedData.length === 0) {
+                if (!_0x5z6a || _0x5z6a.length === 0) {
                     alert('No valid data found in the file!');
                     return;
                 }
                 
                 // Validate and process imported data
-                const validPromos = [];
-                const errors = [];
+                const _0x7b8c = [];
+                const _0x9d0e = [];
                 
-                importedData.forEach((row, index) => {
+                _0x5z6a.forEach((row, index) => {
                     try {
                         // Map Excel columns to promo structure
-                        const promo = {
+                        const _0x1f2g = {
                             id: Date.now() + index, // Generate new ID
                             productName: row['Product Name'] || row['product_name'] || row['productName'] || '',
                             productPrice: parseFloat(row['Product Price'] || row['product_price'] || row['productPrice'] || 0),
